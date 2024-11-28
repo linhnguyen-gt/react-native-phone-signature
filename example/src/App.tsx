@@ -1,12 +1,10 @@
-import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-phone-signature';
-
-const result = multiply(3, 7);
+import { StyleSheet, View } from 'react-native';
+import SignaturePad from 'react-native-phone-signature';
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+      <SignaturePad isVisible={true} onClose={() => {}} />
     </View>
   );
 }

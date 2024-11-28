@@ -1,6 +1,6 @@
 # react-native-phone-signature
 
-React Native Signature Component Skia
+React Native Signature Component Use Skia
 
 ## Installation
 
@@ -16,7 +16,7 @@ import { multiply } from 'react-native-phone-signature';
 
 // ...
 
-const result = multiply(3, 7);
+const result = await multiply(3, 7);
 ```
 
 

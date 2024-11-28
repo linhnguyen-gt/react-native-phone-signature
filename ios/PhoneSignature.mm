@@ -1,21 +1,14 @@
-#import "PhoneSignature.h"
+#import <React/RCTBridgeModule.h>
 
-@implementation PhoneSignature
-RCT_EXPORT_MODULE()
+@interface RCT_EXTERN_MODULE(PhoneSignature, NSObject)
 
-// Don't compile this code when we build for the old architecture.
-#ifdef RCT_NEW_ARCH_ENABLED
-- (NSNumber *)multiply:(double)a b:(double)b {
-    NSNumber *result = @(a * b);
+RCT_EXTERN_METHOD(multiply:(float)a withB:(float)b
+                 withResolver:(RCTPromiseResolveBlock)resolve
+                 withRejecter:(RCTPromiseRejectBlock)reject)
 
-    return result;
-}
-
-- (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
-    (const facebook::react::ObjCTurboModule::InitParams &)params
++ (BOOL)requiresMainQueueSetup
 {
-    return std::make_shared<facebook::react::NativePhoneSignatureSpecJSI>(params);
+  return NO;
 }
-#endif
 
 @end

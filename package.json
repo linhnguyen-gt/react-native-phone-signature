@@ -1,7 +1,7 @@
 {
   "name": "react-native-phone-signature",
   "version": "0.1.0",
-  "description": "React Native Signature Component Skia",
+  "description": "React Native Signature Component Use Skia",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
@@ -54,7 +54,7 @@
     "type": "git",
     "url": "git+https://github.com/linhnguyen-gt/react-native-phone-signature.git"
   },
-  "author": "Linh Nguyen <linh.nguyen96114@gmail.com> (https://github.com/linhnguyen-gt)",
+  "author": "Linh Nguyen <43808684+linhnguyen-gt@users.noreply.github.com> (https://github.com/linhnguyen-gt)",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/linhnguyen-gt/react-native-phone-signature/issues"
@@ -80,7 +80,7 @@
     "prettier": "^3.0.3",
     "react": "18.3.1",
     "react-native": "0.76.3",
-    "react-native-builder-bob": "^0.33.1",
+    "react-native-builder-bob": "^0.33.2",
     "release-it": "^17.10.0",
     "turbo": "^1.10.7",
     "typescript": "^5.2.2"
@@ -160,7 +160,6 @@
     "source": "src",
     "output": "lib",
     "targets": [
-      "codegen",
       [
         "commonjs",
         {
@@ -182,22 +181,9 @@
       ]
     ]
   },
-  "codegenConfig": {
-    "name": "RNPhoneSignatureSpec",
-    "type": "all",
-    "jsSrcsDir": "src",
-    "outputDir": {
-      "ios": "ios/generated",
-      "android": "android/generated"
-    },
-    "android": {
-      "javaPackageName": "com.phonesignature"
-    },
-    "includesGeneratedCode": true
-  },
   "create-react-native-library": {
-    "type": "module-new",
-    "languages": "kotlin-objc",
+    "type": "module-legacy",
+    "languages": "kotlin-swift",
     "version": "0.44.2"
   }
 }

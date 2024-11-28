@@ -1,5 +1,3 @@
-ENV['RCT_NEW_ARCH_ENABLED'] = '1'
-
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
@@ -28,11 +26,6 @@ target 'PhoneSignatureExample' do
   target 'PhoneSignatureExampleTests' do
     inherit! :complete
     # Pods for testing
-  end
-
-
-  pre_install do |installer|
-    system("cd ../../ && npx bob build --target codegen")
   end
 
   post_install do |installer|
