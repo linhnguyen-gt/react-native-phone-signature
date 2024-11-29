@@ -22,10 +22,13 @@ class SignatureView: UIView {
     }
 
     @objc func setSignatureColor(_ color: String) {
-        if let uiColor = UIColor(hexString: color) {
+        print("Setting signature color to:", color)
+        if color == "red" {
+            strokeColor = .red
+        } else if let uiColor = UIColor(hexString: color) {
             strokeColor = uiColor
-            setNeedsDisplay()
         }
+        setNeedsDisplay()
     }
 
     override init(frame: CGRect) {
@@ -55,27 +58,27 @@ class SignatureView: UIView {
 
         // Draw baseline if enabled
         if showBaseline {
-            let baselinePath = UIBezierPath()
-            let y = rect.height - 40
-            baselinePath.move(to: CGPoint(x: 20, y: y))
-            baselinePath.addLine(to: CGPoint(x: rect.width - 20, y: y))
-            UIColor.gray.setStroke()
-            baselinePath.lineWidth = 0.5
-            baselinePath.stroke()
+            let baseline = UIBezierPath()
+            baseline.move(to: CGPoint(x: 0, y: bounds.height * 0.7))
+            baseline.addLine(to: CGPoint(x: bounds.width, y: bounds.height * 0.7))
+            UIColor.gray.withAlphaComponent(0.3).setStroke()
+            baseline.lineWidth = 1.0
+            baseline.stroke()
         }
 
-        // Draw signature
-        strokeColor.setStroke()
+        // Draw signature lines with their respective colors
         for line in lines {
             let path = UIBezierPath()
+            if let firstPoint = line.points.first {
+                path.move(to: firstPoint)
+                for point in line.points.dropFirst() {
+                    path.addLine(to: point)
+                }
+            }
+            line.color.setStroke()
             path.lineWidth = strokeWidth
             path.lineCapStyle = .round
             path.lineJoinStyle = .round
-
-            path.move(to: line.points[0])
-            for point in line.points.dropFirst() {
-                path.addLine(to: point)
-            }
             path.stroke()
         }
     }
@@ -83,7 +86,8 @@ class SignatureView: UIView {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let point = touch.location(in: self)
-        lines.append(Line(points: [point]))
+        let line = Line(points: [point], color: strokeColor)
+        lines.append(line)
         setNeedsDisplay()
     }
 
@@ -99,6 +103,7 @@ class SignatureView: UIView {
 
     struct Line {
         var points: [CGPoint]
+        var color: UIColor
     }
 
     func saveToImage() -> UIImage? {
@@ -128,26 +133,19 @@ class SignatureView: UIView {
 
 extension UIColor {
     convenience init?(hexString: String) {
-        let r, g, b: CGFloat
-
-        if hexString.hasPrefix("#") {
-            let start = hexString.index(hexString.startIndex, offsetBy: 1)
-            let hexColor = String(hexString[start...])
-
-            if hexColor.count == 6 {
-                let scanner = Scanner(string: hexColor)
-                var hexNumber: UInt64 = 0
-
-                if scanner.scanHexInt64(&hexNumber) {
-                    r = CGFloat((hexNumber & 0xff0000) >> 16) / 255
-                    g = CGFloat((hexNumber & 0x00ff00) >> 8) / 255
-                    b = CGFloat(hexNumber & 0x0000ff) / 255
-
-                    self.init(red: r, green: g, blue: b, alpha: 1.0)
-                    return
-                }
-            }
+        print("Converting hex color:", hexString)
+        var hex = hexString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if hex.hasPrefix("#") {
+            hex.remove(at: hex.startIndex)
         }
-        return nil
+
+        var rgb: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&rgb)
+
+        let r = CGFloat((rgb & 0xFF0000) >> 16) / 255.0
+        let g = CGFloat((rgb & 0x00FF00) >> 8) / 255.0
+        let b = CGFloat(rgb & 0x0000FF) / 255.0
+
+        self.init(red: r, green: g, blue: b, alpha: 1.0)
     }
 }

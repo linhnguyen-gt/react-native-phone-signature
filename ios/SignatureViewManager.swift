@@ -23,6 +23,16 @@ class RNSignatureViewManager: RCTViewManager {
         ]
     }
 
+    static func propConfig(for viewName: String!) -> [String: Any]! {
+        return [
+            "strokeWidth": ["CGFloat", "setStrokeWidth"],
+            "showBaseline": ["BOOL", "setShowBaseline"],
+            "signatureColor": ["NSString", "setSignatureColor"],
+            "isSaveToLibrary": ["BOOL"],
+            "outputFormat": ["NSString"]
+        ]
+    }
+
     @objc func clear(_ node: NSNumber) {
         print("Clear command received for node:", node)
         DispatchQueue.main.async {
