@@ -4,7 +4,13 @@ import SignaturePad from 'react-native-phone-signature';
 export default function App() {
   return (
     <View style={styles.container}>
-      <SignaturePad isVisible={true} onClose={() => {}} />
+      <SignaturePad
+        isVisible={true}
+        onClose={() => {}}
+        showBaseline={true}
+        isSaveToLibrary={true}
+        signatureColor="red"
+      />
     </View>
   );
 }

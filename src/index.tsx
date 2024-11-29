@@ -4,6 +4,7 @@
 // import * as MediaLibrary from 'expo-media-library';
 import React from 'react';
 import {
+  Alert,
   findNodeHandle,
   Modal,
   requireNativeComponent,
@@ -15,15 +16,6 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-
-type Point = {
-  x: number;
-  y: number;
-};
-
-enum ResizeFormat {
-  JPEG = 'JPEG',
-}
 
 export type AssetSignature = {
   path: string;
@@ -42,22 +34,39 @@ type SignaturePadProps = {
   backgroundColorButton?: string;
   isSaveToLibrary?: boolean;
   lineWidth?: number;
+  showBaseline?: boolean;
+  signatureColor?: string;
+  outputFormat?: 'JPEG' | 'PNG';
   presentationStyle?: 'fullScreen' | 'modal';
 };
 
 type RNSignatureViewProps = {
   style?: ViewStyle;
   strokeWidth?: number;
-  onSave?: (event: any) => void;
+  onSave?: (event: SignatureEvent) => void;
   onClear?: () => void;
+  isSaveToLibrary?: boolean;
+  showBaseline?: boolean;
+  signatureColor?: string;
+  outputFormat?: 'JPEG' | 'PNG';
 };
 
 const RNSignatureView =
   requireNativeComponent<RNSignatureViewProps>('RNSignatureView');
 
-// Define command constants
 const COMMAND_CLEAR = 1;
 const COMMAND_SAVE = 2;
+
+type SignatureEvent = {
+  nativeEvent: {
+    path: string;
+    uri?: string;
+    name: string;
+    width?: number;
+    height?: number;
+    size?: number;
+  };
+};
 
 const SignaturePad: React.FC<SignaturePadProps> = ({
   isVisible,
@@ -67,6 +76,9 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
   backgroundColorButton,
   isSaveToLibrary = true,
   lineWidth = 1.5,
+  showBaseline = false,
+  signatureColor = '#000000',
+  outputFormat = 'JPEG',
 }) => {
   const signatureRef = React.useRef(null);
 
@@ -92,22 +104,30 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
   }, []);
 
   const handleSave = React.useCallback(
-    (event: any) => {
+    (event: SignatureEvent) => {
       const { path, uri, name, width, height, size } = event.nativeEvent;
       const fileInfo: AssetSignature = {
         path,
         uri: uri || `file://${path}`,
-        name,
+        name: name.replace('.jpg', outputFormat === 'PNG' ? '.png' : '.jpg'),
         size: size || 0,
         width: width || 940,
         height: height || 788,
       };
 
       console.log('Signature saved:', fileInfo);
+
+      if (!isSaveToLibrary) {
+        onSave?.(fileInfo);
+        onClose();
+        return;
+      }
+
       onSave?.(fileInfo);
+      Alert.alert('Success', 'Signature saved successfully!');
       onClose();
     },
-    [onSave, onClose]
+    [outputFormat, isSaveToLibrary, onSave, onClose]
   );
 
   return (
@@ -135,6 +155,10 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
               strokeWidth={lineWidth}
               onSave={handleSave}
               onClear={onClear}
+              isSaveToLibrary={isSaveToLibrary}
+              showBaseline={showBaseline}
+              signatureColor={signatureColor}
+              outputFormat={outputFormat}
             />
           </View>
 
