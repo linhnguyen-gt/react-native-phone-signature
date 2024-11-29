@@ -33,72 +33,95 @@ class RNSignatureViewManager: RCTViewManager {
     }
 
     @objc func save(_ node: NSNumber) {
+        print("Save command received for node:", node)
         DispatchQueue.main.async {
             if let view = self.bridge?.uiManager.view(forReactTag: node) as? SignatureView {
                 if let image = view.saveToImage() {
-                    let fileName = "signature_\(Int(Date().timeIntervalSince1970)).jpg"
+                    let outputFormat = view.outputFormat ?? "JPEG"
+                    let fileExt = outputFormat == "PNG" ? "png" : "jpg"
+                    let fileName = "signature_\(Int(Date().timeIntervalSince1970)).\(fileExt)"
+
+                    print("Generated fileName:", fileName)
+
                     let isSaveToLibrary = view.isSaveToLibrary
 
                     if isSaveToLibrary {
-                        self.saveToPhotos(image: image, fileName: fileName, node: node)
+                        self.saveToPhotos(image: image, fileName: fileName, view: view, outputFormat: outputFormat)
                     } else {
-                        self.saveToTemp(image: image, fileName: fileName, node: node)
+                        self.saveToTemp(image: image, fileName: fileName, view: view, outputFormat: outputFormat)
                     }
                 }
             }
         }
     }
 
-    private func saveToPhotos(image: UIImage, fileName: String, node: NSNumber) {
+    private func saveToPhotos(image: UIImage, fileName: String, view: SignatureView, outputFormat: String) {
+        print("Saving to photos with fileName:", fileName)
         PHPhotoLibrary.requestAuthorization { status in
             if status == .authorized {
                 PHPhotoLibrary.shared().performChanges({
                     PHAssetChangeRequest.creationRequestForAsset(from: image)
                 }) { success, error in
                     if success {
-                        if let imageData = image.jpegData(compressionQuality: 0.8) {
+                        let imageData: Data?
+                        if outputFormat == "PNG" {
+                            imageData = image.pngData()
+                        } else {
+                            imageData = image.jpegData(compressionQuality: 0.8)
+                        }
+
+                        if let imageData = imageData {
                             let tempPath = NSTemporaryDirectory().appending(fileName)
                             try? imageData.write(to: URL(fileURLWithPath: tempPath))
 
                             DispatchQueue.main.async {
-                                self.sendEvent(withName: "onSave", body: [
+                                print("Photo saved successfully")
+                                let eventData: [String: Any] = [
                                     "path": tempPath,
                                     "name": fileName,
                                     "uri": tempPath,
                                     "width": image.size.width,
                                     "height": image.size.height,
                                     "size": imageData.count
-                                ], reactTag: node)
+                                ]
+                                print("Sending event data:", eventData)
+                                view.emitSaveEvent(eventData)
                             }
                         }
+                    } else if let error = error {
+                        print("Error saving photo:", error)
                     }
                 }
             }
         }
     }
 
-    private func saveToTemp(image: UIImage, fileName: String, node: NSNumber) {
-        if let imageData = image.jpegData(compressionQuality: 0.8) {
+    private func saveToTemp(image: UIImage, fileName: String, view: SignatureView, outputFormat: String) {
+        print("Saving to temp with fileName:", fileName)
+        let imageData: Data?
+        if outputFormat == "PNG" {
+            imageData = image.pngData()
+        } else {
+            imageData = image.jpegData(compressionQuality: 0.8)
+        }
+
+        if let imageData = imageData {
             let tempPath = NSTemporaryDirectory().appending(fileName)
             try? imageData.write(to: URL(fileURLWithPath: tempPath))
 
             DispatchQueue.main.async {
-                self.sendEvent(withName: "onSave", body: [
+                print("Temp file saved")
+                let eventData: [String: Any] = [
                     "path": tempPath,
                     "name": fileName,
                     "uri": tempPath,
                     "width": image.size.width,
                     "height": image.size.height,
                     "size": imageData.count
-                ], reactTag: node)
+                ]
+                print("Sending event data:", eventData)
+                view.emitSaveEvent(eventData)
             }
-        }
-    }
-
-    private func sendEvent(withName name: String, body: [String: Any], reactTag: NSNumber) {
-        if let uiManager = self.bridge?.module(for: RCTUIManager.self) as? RCTUIManager,
-           let view = uiManager.view(forReactTag: reactTag) as? SignatureView {
-            view.onSave?(["nativeEvent": body as Any])
         }
     }
 }

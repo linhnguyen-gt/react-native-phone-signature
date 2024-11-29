@@ -135,17 +135,21 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
 
   const handleSave = React.useCallback(
     (event: SignatureEvent) => {
-      const { path, uri, name, width, height, size } = event.nativeEvent;
+      console.log('Raw event received:', event);
+
+      const nativeEvent = event.nativeEvent;
+      console.log('Native event data:', nativeEvent);
+
       const fileInfo: AssetSignature = {
-        path,
-        uri: uri || `file://${path}`,
-        name: name.replace('.jpg', outputFormat === 'PNG' ? '.png' : '.jpg'),
-        size: size || 0,
-        width: width || 940,
-        height: height || 788,
+        path: nativeEvent.path || '',
+        uri: nativeEvent.uri ? `file://${nativeEvent.uri}` : '',
+        name: nativeEvent.name || '',
+        size: nativeEvent.size || 0,
+        width: nativeEvent.width || 940,
+        height: nativeEvent.height || 788,
       };
 
-      console.log('Signature saved:', fileInfo);
+      console.log('FileInfo created:', fileInfo);
 
       if (!isSaveToLibrary) {
         onSave?.(fileInfo);
@@ -157,7 +161,7 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
       Alert.alert('Success', 'Signature saved successfully!');
       onClose();
     },
-    [outputFormat, isSaveToLibrary, onSave, onClose]
+    [isSaveToLibrary, onSave, onClose]
   );
 
   return (

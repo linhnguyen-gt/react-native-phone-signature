@@ -9,6 +9,7 @@ class SignatureView: UIView {
     private var showBaseline: Bool = false
     @objc var onSave: RCTDirectEventBlock?
     @objc var isSaveToLibrary: Bool = true
+    @objc var outputFormat: String?
 
     @objc func setStrokeWidth(_ width: CGFloat) {
         strokeWidth = width
@@ -25,10 +26,6 @@ class SignatureView: UIView {
             strokeColor = uiColor
             setNeedsDisplay()
         }
-    }
-
-    @objc func setOutputFormat(_ format: String) {
-        // Handle output format if needed
     }
 
     override init(frame: CGRect) {
@@ -116,6 +113,14 @@ class SignatureView: UIView {
         UIGraphicsEndImageContext()
 
         return image
+    }
+
+    func emitSaveEvent(_ data: [String: Any]) {
+        print("SignatureView - About to emit save event")
+        print("Event data:", data)
+
+        // Send data directly without extra nesting
+        onSave?(data)
     }
 
     // ... rest of the methods (saveToImage, etc.) ...
