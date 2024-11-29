@@ -7,6 +7,7 @@ import {
   Alert,
   findNodeHandle,
   Modal,
+  Platform,
   requireNativeComponent,
   SafeAreaView,
   StyleSheet,
@@ -82,26 +83,55 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
 }) => {
   const signatureRef = React.useRef(null);
 
+  // Move commands creation into a useCallback to ensure it gets the latest ref
+  const getCommands = React.useCallback(() => {
+    const nodeHandle = findNodeHandle(signatureRef.current);
+    if (!nodeHandle) return null;
+
+    if (Platform.OS === 'android') {
+      return {
+        clear: () =>
+          UIManager.dispatchViewManagerCommand(nodeHandle, COMMAND_CLEAR, []),
+        save: () =>
+          UIManager.dispatchViewManagerCommand(nodeHandle, COMMAND_SAVE, []),
+      };
+    }
+
+    // iOS uses string commands
+    return {
+      clear: () => {
+        console.log('Dispatching clear command to iOS');
+        UIManager.dispatchViewManagerCommand(
+          nodeHandle,
+          'clear', // Use string command
+          []
+        );
+      },
+      save: () =>
+        UIManager.dispatchViewManagerCommand(
+          nodeHandle,
+          'save', // Use string command
+          []
+        ),
+    };
+  }, []);
+
   const clearSignature = React.useCallback(() => {
-    if (signatureRef.current) {
-      UIManager.dispatchViewManagerCommand(
-        findNodeHandle(signatureRef.current),
-        COMMAND_CLEAR,
-        []
-      );
+    console.log('Clearing signature...');
+    const commands = getCommands();
+    if (commands) {
+      console.log('Commands available, clearing...');
+      commands.clear();
       onClear?.();
     }
-  }, [onClear]);
+  }, [getCommands, onClear]);
 
   const saveSignature = React.useCallback(() => {
-    if (signatureRef.current) {
-      UIManager.dispatchViewManagerCommand(
-        findNodeHandle(signatureRef.current),
-        COMMAND_SAVE,
-        []
-      );
+    const commands = getCommands();
+    if (commands) {
+      commands.save();
     }
-  }, []);
+  }, [getCommands]);
 
   const handleSave = React.useCallback(
     (event: SignatureEvent) => {
