@@ -1,22 +1,16 @@
-// import ImageResizer from '@bam.tech/react-native-image-resizer';
-// import * as RNFS from '@dr.pogodin/react-native-fs';
-// import { Canvas, Path, SkiaDomView } from '@shopify/react-native-skia';
-// import * as MediaLibrary from 'expo-media-library';
 import React from 'react';
 import {
   Alert,
-  findNodeHandle,
   Modal,
-  Platform,
   requireNativeComponent,
   SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  UIManager,
   View,
   type ViewStyle,
 } from 'react-native';
+import { useManagerCommand } from './hooks';
 
 export type AssetSignature = {
   path: string;
@@ -55,9 +49,6 @@ type RNSignatureViewProps = {
 const RNSignatureView =
   requireNativeComponent<RNSignatureViewProps>('RNSignatureView');
 
-const COMMAND_CLEAR = 1;
-const COMMAND_SAVE = 2;
-
 type SignatureEvent = {
   nativeEvent: {
     path: string;
@@ -83,44 +74,11 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
 }) => {
   const signatureRef = React.useRef(null);
 
-  // Move commands creation into a useCallback to ensure it gets the latest ref
-  const getCommands = React.useCallback(() => {
-    const nodeHandle = findNodeHandle(signatureRef.current);
-    if (!nodeHandle) return null;
-
-    if (Platform.OS === 'android') {
-      return {
-        clear: () =>
-          UIManager.dispatchViewManagerCommand(nodeHandle, COMMAND_CLEAR, []),
-        save: () =>
-          UIManager.dispatchViewManagerCommand(nodeHandle, COMMAND_SAVE, []),
-      };
-    }
-
-    // iOS uses string commands
-    return {
-      clear: () => {
-        console.log('Dispatching clear command to iOS');
-        UIManager.dispatchViewManagerCommand(
-          nodeHandle,
-          'clear', // Use string command
-          []
-        );
-      },
-      save: () =>
-        UIManager.dispatchViewManagerCommand(
-          nodeHandle,
-          'save', // Use string command
-          []
-        ),
-    };
-  }, []);
+  const getCommands = useManagerCommand(signatureRef);
 
   const clearSignature = React.useCallback(() => {
-    console.log('Clearing signature...');
     const commands = getCommands();
     if (commands) {
-      console.log('Commands available, clearing...');
       commands.clear();
       onClear?.();
     }
@@ -135,10 +93,7 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
 
   const handleSave = React.useCallback(
     (event: SignatureEvent) => {
-      console.log('Raw event received:', event);
-
       const nativeEvent = event.nativeEvent;
-      console.log('Native event data:', nativeEvent);
 
       const fileInfo: AssetSignature = {
         path: nativeEvent.path || '',
