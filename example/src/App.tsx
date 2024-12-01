@@ -7,12 +7,16 @@ import SignaturePad, {
 export default function App() {
   const signaturePadRef = React.useRef<SignaturePadRef | null>(null);
   const [presentationStyle, setPresentationStyle] = React.useState<
-    'fullScreen' | 'modal'
+    'fullScreen' | 'modal' | 'pageSheet' | 'signature-pad'
   >('modal');
 
-  const handleOpenModal = React.useCallback(() => {
-    signaturePadRef.current?.open();
-  }, []);
+  const handleOpenModal = React.useCallback(
+    (style: 'fullScreen' | 'modal' | 'pageSheet' | 'signature-pad') => {
+      signaturePadRef.current?.open();
+      setPresentationStyle(style);
+    },
+    []
+  );
 
   return (
     <View style={styles.container}>
@@ -20,9 +24,25 @@ export default function App() {
         <TouchableOpacity
           style={[
             styles.button,
+            presentationStyle === 'pageSheet' && styles.activeButton,
+          ]}
+          onPress={() => handleOpenModal('pageSheet')}
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              presentationStyle === 'pageSheet' && styles.activeButtonText,
+            ]}
+          >
+            Bottom Sheet
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.button,
             presentationStyle === 'modal' && styles.activeButton,
           ]}
-          onPress={handleOpenModal}
+          onPress={() => handleOpenModal('modal')}
         >
           <Text
             style={[
@@ -39,7 +59,7 @@ export default function App() {
             styles.button,
             presentationStyle === 'fullScreen' && styles.activeButton,
           ]}
-          onPress={() => setPresentationStyle('fullScreen')}
+          onPress={() => handleOpenModal('fullScreen')}
         >
           <Text
             style={[
@@ -48,6 +68,22 @@ export default function App() {
             ]}
           >
             Full Screen
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            presentationStyle === 'signature-pad' && styles.activeButton,
+          ]}
+          onPress={() => handleOpenModal('signature-pad')}
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              presentationStyle === 'signature-pad' && styles.activeButtonText,
+            ]}
+          >
+            Signature Pad
           </Text>
         </TouchableOpacity>
       </View>
@@ -76,7 +112,6 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   buttonContainer: {
-    flexDirection: 'row',
     marginBottom: 20,
     gap: 10,
   },
