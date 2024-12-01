@@ -150,14 +150,12 @@ class SignatureView(context: Context) : View(context) {
 
         val bitmap = when (outputFormat) {
             Bitmap.CompressFormat.PNG -> {
-                // For PNG, use transparent background
                 val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                 val canvas = Canvas(bitmap)
                 draw(canvas)
                 bitmap
             }
             else -> {
-                // For JPEG, use white background
                 val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                 val canvas = Canvas(bitmap)
                 canvas.drawColor(Color.WHITE)

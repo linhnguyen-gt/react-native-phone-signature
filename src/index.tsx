@@ -31,6 +31,7 @@ type SignaturePadProps = {
   signatureColor?: string;
   outputFormat?: 'JPEG' | 'PNG';
   presentationStyle?: 'fullScreen' | 'modal';
+  closeAfterSave?: boolean;
 };
 
 type RNSignatureViewProps = {
@@ -75,6 +76,7 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       showBaseline = false,
       signatureColor = '#000000',
       outputFormat = 'JPEG',
+      closeAfterSave = true,
     },
     ref
   ) => {
@@ -83,6 +85,8 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       close: onClose,
       onClear: clearSignature,
     }));
+    const signatureRef = React.useRef(null);
+    const getCommands = useManagerCommand(signatureRef);
 
     const [isVisible, setIsVisible] = React.useState(false);
 
@@ -93,10 +97,6 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
     const onOpen = React.useCallback(() => {
       setIsVisible(true);
     }, []);
-
-    const signatureRef = React.useRef(null);
-
-    const getCommands = useManagerCommand(signatureRef);
 
     const clearSignature = React.useCallback(() => {
       const commands = getCommands();
@@ -113,32 +113,42 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       }
     }, [getCommands]);
 
+    const createFileInfo = React.useCallback(
+      (nativeEvent: SignatureEvent['nativeEvent']): AssetSignature => ({
+        path: nativeEvent.path || '',
+        uri: nativeEvent.uri ? `file://${nativeEvent.uri}` : '',
+        name: nativeEvent.name || '',
+        size: nativeEvent.size || 0,
+        width: nativeEvent.width || 940,
+        height: nativeEvent.height || 788,
+      }),
+      []
+    );
+
+    const handleSaveComplete = React.useCallback(
+      (fileInfo: AssetSignature) => {
+        onSave?.(fileInfo);
+        if (closeAfterSave) {
+          onClose();
+        }
+      },
+      [onSave, onClose, closeAfterSave]
+    );
+
     const handleSave = React.useCallback(
       (event: SignatureEvent) => {
-        const nativeEvent = event.nativeEvent;
-
-        const fileInfo: AssetSignature = {
-          path: nativeEvent.path || '',
-          uri: nativeEvent.uri ? `file://${nativeEvent.uri}` : '',
-          name: nativeEvent.name || '',
-          size: nativeEvent.size || 0,
-          width: nativeEvent.width || 940,
-          height: nativeEvent.height || 788,
-        };
-
+        const fileInfo = createFileInfo(event.nativeEvent);
         console.log('FileInfo created:', fileInfo);
 
         if (!isSaveToLibrary) {
-          onSave?.(fileInfo);
-          onClose();
+          handleSaveComplete(fileInfo);
           return;
         }
 
-        onSave?.(fileInfo);
+        handleSaveComplete(fileInfo);
         Alert.alert('Success', 'Signature saved successfully!');
-        onClose();
       },
-      [isSaveToLibrary, onSave, onClose]
+      [createFileInfo, isSaveToLibrary, handleSaveComplete]
     );
 
     return (

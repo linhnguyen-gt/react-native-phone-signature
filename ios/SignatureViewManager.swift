@@ -134,4 +134,8 @@ class RNSignatureViewManager: RCTViewManager {
             }
         }
     }
+
+    @objc func setStrokeWidth(_ view: SignatureView, width: NSNumber) {
+        view.strokeWidth = CGFloat(truncating: width)
+    }
 }

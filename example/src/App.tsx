@@ -56,6 +56,7 @@ export default function App() {
         ref={signaturePadRef}
         showBaseline={true}
         isSaveToLibrary={true}
+        closeAfterSave={false}
         signatureColor="red"
         presentationStyle={presentationStyle}
       />
