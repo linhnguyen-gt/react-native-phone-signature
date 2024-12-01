@@ -6,16 +6,13 @@ A React Native signature component using native drawing APIs for iOS (UIKit) and
 
 ## Screenshots
 
-<div style="display: flex; justify-content: center; gap: 20px;">
-  <div style="text-align: center;">
-    <strong>Android</strong><br/>
-    <img src="image/android_screenshot.png" height="400" alt="Android Screenshot" style="margin: 10px 0; border-radius: 10px; box-shadow: 0 20px 30px 3px rgba(9, 9, 16, 0.2);">
-  </div>
-  <div style="text-align: center;">
-    <strong>iOS</strong><br/>
-    <img src="image/ios_screenshot.png" height="400" alt="iOS Screenshot" style="margin: 10px 0; border-radius: 10px; box-shadow: 0 20px 30px 3px rgba(9, 9, 16, 0.2);">
-  </div>
-</div>
+<p align="center">
+  <img src="image/android_screenshot.png" height="400" alt="Android Screenshot">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="image/ios_screenshot.png" height="400" alt="iOS Screenshot">
+</p>
+<p align="center">
+  <em>Android</em>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<em>iOS</em>
+</p>
 
 ## Features
 - Smooth signature drawing with pressure sensitivity
