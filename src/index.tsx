@@ -22,8 +22,6 @@ export type AssetSignature = {
 };
 
 type SignaturePadProps = {
-  isVisible: boolean;
-  onClose: () => void;
   onSave?: (file: AssetSignature) => void;
   onClear?: () => void;
   backgroundColorButton?: string;
@@ -60,125 +58,152 @@ type SignatureEvent = {
   };
 };
 
-const SignaturePad: React.FC<SignaturePadProps> = ({
-  isVisible,
-  onClose,
-  onSave,
-  onClear,
-  backgroundColorButton,
-  isSaveToLibrary = true,
-  lineWidth = 1.5,
-  showBaseline = false,
-  signatureColor = '#000000',
-  outputFormat = 'JPEG',
-}) => {
-  const signatureRef = React.useRef(null);
+export type SignaturePadRef = {
+  open: () => void;
+  close: () => void;
+  onClear: () => void;
+};
 
-  const getCommands = useManagerCommand(signatureRef);
-
-  const clearSignature = React.useCallback(() => {
-    const commands = getCommands();
-    if (commands) {
-      commands.clear();
-      onClear?.();
-    }
-  }, [getCommands, onClear]);
-
-  const saveSignature = React.useCallback(() => {
-    const commands = getCommands();
-    if (commands) {
-      commands.save();
-    }
-  }, [getCommands]);
-
-  const handleSave = React.useCallback(
-    (event: SignatureEvent) => {
-      const nativeEvent = event.nativeEvent;
-
-      const fileInfo: AssetSignature = {
-        path: nativeEvent.path || '',
-        uri: nativeEvent.uri ? `file://${nativeEvent.uri}` : '',
-        name: nativeEvent.name || '',
-        size: nativeEvent.size || 0,
-        width: nativeEvent.width || 940,
-        height: nativeEvent.height || 788,
-      };
-
-      console.log('FileInfo created:', fileInfo);
-
-      if (!isSaveToLibrary) {
-        onSave?.(fileInfo);
-        onClose();
-        return;
-      }
-
-      onSave?.(fileInfo);
-      Alert.alert('Success', 'Signature saved successfully!');
-      onClose();
+const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
+  (
+    {
+      onSave,
+      onClear,
+      backgroundColorButton,
+      isSaveToLibrary = true,
+      lineWidth = 1.5,
+      showBaseline = false,
+      signatureColor = '#000000',
+      outputFormat = 'JPEG',
     },
-    [isSaveToLibrary, onSave, onClose]
-  );
+    ref
+  ) => {
+    React.useImperativeHandle(ref, () => ({
+      open: onOpen,
+      close: onClose,
+      onClear: clearSignature,
+    }));
 
-  return (
-    <Modal
-      visible={isVisible}
-      animationType="fade"
-      transparent={true}
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Your Signature</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeButtonText}>✕</Text>
-            </TouchableOpacity>
-          </View>
+    const [isVisible, setIsVisible] = React.useState(false);
 
-          <Text style={styles.subtitle}>Please sign within the box below</Text>
+    const onClose = React.useCallback(() => {
+      setIsVisible(false);
+    }, []);
 
-          <View style={styles.canvasContainer}>
-            <RNSignatureView
-              ref={signatureRef}
-              style={styles.canvas}
-              strokeWidth={lineWidth}
-              onSave={handleSave}
-              onClear={onClear}
-              isSaveToLibrary={isSaveToLibrary}
-              showBaseline={showBaseline}
-              signatureColor={signatureColor}
-              outputFormat={outputFormat}
-            />
-          </View>
+    const onOpen = React.useCallback(() => {
+      setIsVisible(true);
+    }, []);
 
-          <View style={styles.buttonContainer}>
-            <View style={styles.buttonGroup}>
-              <TouchableOpacity
-                style={[styles.button, styles.clearButton]}
-                onPress={clearSignature}
-              >
-                <Text style={styles.cancelButtonText}>Clear</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.saveButton,
-                  {
-                    backgroundColor: backgroundColorButton ?? '#0066FF',
-                    shadowColor: backgroundColorButton ?? '#0066FF',
-                  },
-                ]}
-                onPress={saveSignature}
-              >
-                <Text style={styles.saveButtonText}>Save</Text>
+    const signatureRef = React.useRef(null);
+
+    const getCommands = useManagerCommand(signatureRef);
+
+    const clearSignature = React.useCallback(() => {
+      const commands = getCommands();
+      if (commands) {
+        commands.clear();
+        onClear?.();
+      }
+    }, [getCommands, onClear]);
+
+    const saveSignature = React.useCallback(() => {
+      const commands = getCommands();
+      if (commands) {
+        commands.save();
+      }
+    }, [getCommands]);
+
+    const handleSave = React.useCallback(
+      (event: SignatureEvent) => {
+        const nativeEvent = event.nativeEvent;
+
+        const fileInfo: AssetSignature = {
+          path: nativeEvent.path || '',
+          uri: nativeEvent.uri ? `file://${nativeEvent.uri}` : '',
+          name: nativeEvent.name || '',
+          size: nativeEvent.size || 0,
+          width: nativeEvent.width || 940,
+          height: nativeEvent.height || 788,
+        };
+
+        console.log('FileInfo created:', fileInfo);
+
+        if (!isSaveToLibrary) {
+          onSave?.(fileInfo);
+          onClose();
+          return;
+        }
+
+        onSave?.(fileInfo);
+        Alert.alert('Success', 'Signature saved successfully!');
+        onClose();
+      },
+      [isSaveToLibrary, onSave, onClose]
+    );
+
+    return (
+      <Modal
+        visible={isVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={onClose}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.modalContent}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Your Signature</Text>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Text style={styles.closeButtonText}>✕</Text>
               </TouchableOpacity>
             </View>
+
+            <Text style={styles.subtitle}>
+              Please sign within the box below
+            </Text>
+
+            <View style={styles.canvasContainer}>
+              <RNSignatureView
+                ref={signatureRef}
+                style={styles.canvas}
+                strokeWidth={lineWidth}
+                onSave={handleSave}
+                onClear={onClear}
+                isSaveToLibrary={isSaveToLibrary}
+                showBaseline={showBaseline}
+                signatureColor={signatureColor}
+                outputFormat={outputFormat}
+              />
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <View style={styles.buttonGroup}>
+                <TouchableOpacity
+                  style={[styles.button, styles.clearButton]}
+                  onPress={clearSignature}
+                >
+                  <Text style={styles.cancelButtonText}>Clear</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    styles.saveButton,
+                    {
+                      backgroundColor: backgroundColorButton ?? '#0066FF',
+                      shadowColor: backgroundColorButton ?? '#0066FF',
+                    },
+                  ]}
+                  onPress={saveSignature}
+                >
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        </View>
-      </SafeAreaView>
-    </Modal>
-  );
-};
+        </SafeAreaView>
+      </Modal>
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   safeArea: {
