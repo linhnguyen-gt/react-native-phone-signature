@@ -1,7 +1,6 @@
 import React from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SignaturePad, {
-  type AssetSignature,
   type SignaturePadRef,
 } from 'react-native-phone-signature';
 
@@ -19,9 +18,9 @@ export default function App() {
     []
   );
 
-  const handleSave = React.useCallback((file: AssetSignature) => {
-    console.log('Signature saved:', file);
-    Alert.alert('Success', `Signature saved!\nFile path: ${file.path}`);
+  const handleSave = React.useCallback(() => {
+    signaturePadRef.current?.onSave();
+    Alert.alert('Success', `Signature saved!`);
   }, []);
 
   const handleClear = React.useCallback(() => {
@@ -92,7 +91,7 @@ export default function App() {
               presentationStyle="signature-pad"
               showBaseline={true}
               signatureColor="blue"
-              onSave={handleSave}
+              onSave={(file) => console.log('Signature saved!', file)}
               onClear={() => console.log('Signature cleared!')}
             />
             <View style={styles.inlineButtonContainer}>

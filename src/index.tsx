@@ -66,6 +66,7 @@ export type SignaturePadRef = {
   open: () => void;
   close: () => void;
   onClear: () => void;
+  onSave: () => void;
 };
 
 const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
@@ -89,6 +90,7 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       open: onOpen,
       close: onClose,
       onClear: clearSignature,
+      onSave: saveSignature,
     }));
     const signatureRef = React.useRef<any>(null);
     const commandsRef = React.useRef<any>(null);
