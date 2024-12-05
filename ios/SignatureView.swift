@@ -33,6 +33,12 @@ class SignatureView: UIView {
         var velocities: [CGFloat]
     }
 
+    var hasSignature: Bool {
+        return !lines.isEmpty && lines.contains { line in
+            return line.points.count > 1
+        }
+    }
+
     override func draw(_ rect: CGRect) {
         super.draw(rect)
 
@@ -200,11 +206,19 @@ class SignatureView: UIView {
     }
 
     func saveToImage() -> UIImage? {
+        guard hasSignature else {
+            let errorData: [String: Any] = [
+                "error": true,
+                "message": "Please draw your signature first"
+            ]
+            emitSaveEvent(errorData)
+            return nil
+        }
+
         UIGraphicsBeginImageContextWithOptions(bounds.size, false, UIScreen.main.scale)
         guard let context = UIGraphicsGetCurrentContext() else { return nil }
 
         layer.render(in: context)
-
         let image = UIGraphicsGetImageFromCurrentImageContext()
         UIGraphicsEndImageContext()
 

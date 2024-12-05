@@ -24,6 +24,7 @@ export type AssetSignature = {
 type SignaturePadProps = {
   onSave?: (file: AssetSignature) => void;
   onClear?: () => void;
+  onError?: () => void;
   backgroundColorButton?: string;
   isSaveToLibrary?: boolean;
   lineWidth?: number;
@@ -56,6 +57,8 @@ type SignatureEvent = {
     width?: number;
     height?: number;
     size?: number;
+    error?: boolean;
+    message?: string;
   };
 };
 
@@ -70,6 +73,7 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
     {
       onSave,
       onClear,
+      onError,
       backgroundColorButton,
       isSaveToLibrary = true,
       lineWidth = 1.5,
@@ -86,8 +90,20 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       close: onClose,
       onClear: clearSignature,
     }));
-    const signatureRef = React.useRef(null);
+    const signatureRef = React.useRef<any>(null);
+    const commandsRef = React.useRef<any>(null);
+    const [commands, setCommands] = React.useState<any>(null);
     const getCommands = useManagerCommand(signatureRef);
+
+    React.useEffect(() => {
+      const currentCommands = getCommands();
+      console.log('Effect getCommands:', currentCommands);
+
+      if (currentCommands) {
+        commandsRef.current = currentCommands;
+        setCommands(currentCommands);
+      }
+    }, [getCommands]);
 
     const [isVisible, setIsVisible] = React.useState(false);
 
@@ -100,19 +116,33 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
     }, []);
 
     const clearSignature = React.useCallback(() => {
-      const commands = getCommands();
-      if (commands) {
-        commands.clear();
-        onClear?.();
-      }
-    }, [getCommands, onClear]);
+      const currentCommands = commands || commandsRef.current || getCommands();
 
-    const saveSignature = React.useCallback(() => {
-      const commands = getCommands();
-      if (commands) {
-        commands.save();
+      if (!currentCommands) {
+        let attempts = 0;
+        const maxAttempts = 5;
+
+        const tryGetCommands = () => {
+          attempts++;
+          const retryCommands =
+            commands || commandsRef.current || getCommands();
+          if (retryCommands) {
+            commandsRef.current = retryCommands;
+            setCommands(retryCommands);
+            retryCommands.clear();
+            onClear?.();
+          } else if (attempts < maxAttempts) {
+            setTimeout(tryGetCommands, 200);
+          }
+        };
+
+        setTimeout(tryGetCommands, 200);
+        return;
       }
-    }, [getCommands]);
+
+      currentCommands.clear();
+      onClear?.();
+    }, [commands, getCommands, onClear]);
 
     const createFileInfo = React.useCallback(
       (nativeEvent: SignatureEvent['nativeEvent']): AssetSignature => ({
@@ -138,19 +168,54 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
 
     const handleSave = React.useCallback(
       (event: SignatureEvent) => {
-        const fileInfo = createFileInfo(event.nativeEvent);
-        console.log('FileInfo created:', fileInfo);
-
-        if (!isSaveToLibrary) {
-          handleSaveComplete(fileInfo);
+        if (event.nativeEvent.error) {
+          if (onError) {
+            onError();
+          } else {
+            Alert.alert('Error', event.nativeEvent.message || '');
+          }
           return;
         }
 
-        handleSaveComplete(fileInfo);
-        Alert.alert('Success', 'Signature saved successfully!');
+        try {
+          const fileInfo = createFileInfo(event.nativeEvent);
+          handleSaveComplete(fileInfo);
+        } catch (error) {
+          if (onError) {
+            onError();
+          } else {
+            Alert.alert('Error', 'Please draw your signature first');
+          }
+        }
       },
-      [createFileInfo, isSaveToLibrary, handleSaveComplete]
+      [createFileInfo, handleSaveComplete, onError]
     );
+    const saveSignature = React.useCallback(() => {
+      const currentCommands = commands || commandsRef.current || getCommands();
+
+      if (!currentCommands) {
+        let attempts = 0;
+        const maxAttempts = 5;
+
+        const tryGetCommands = () => {
+          attempts++;
+          const retryCommands =
+            commands || commandsRef.current || getCommands();
+          if (retryCommands) {
+            commandsRef.current = retryCommands;
+            setCommands(retryCommands);
+            retryCommands.save();
+          } else if (attempts < maxAttempts) {
+            setTimeout(tryGetCommands, 200);
+          }
+        };
+
+        setTimeout(tryGetCommands, 200);
+        return;
+      }
+
+      currentCommands.save();
+    }, [commands, getCommands]);
 
     const renderPage = React.useMemo(() => {
       switch (presentationStyle) {
@@ -221,7 +286,7 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
           );
         case 'signature-pad':
           return (
-            <Box borderWidth={1} height="100%" width="100%">
+            <Box height="100%" width="100%">
               <RNSignatureView
                 ref={signatureRef}
                 style={styles.canvas}
