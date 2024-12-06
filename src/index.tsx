@@ -10,7 +10,8 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { Box, Text, Touchable } from './component';
-import { useManagerCommand } from './hooks';
+import { createFileInfo } from './helper';
+import { useSignatureCommands } from './hooks';
 
 export type AssetSignature = {
   path: string;
@@ -49,7 +50,7 @@ type RNSignatureViewProps = {
 const RNSignatureView =
   requireNativeComponent<RNSignatureViewProps>('RNSignatureView');
 
-type SignatureEvent = {
+export type SignatureEvent = {
   nativeEvent: {
     path: string;
     uri?: string;
@@ -92,20 +93,8 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       onClear: clearSignature,
       onSave: saveSignature,
     }));
-    const signatureRef = React.useRef<any>(null);
-    const commandsRef = React.useRef<any>(null);
-    const [commands, setCommands] = React.useState<any>(null);
-    const getCommands = useManagerCommand(signatureRef);
 
-    React.useEffect(() => {
-      const currentCommands = getCommands();
-      console.log('Effect getCommands:', currentCommands);
-
-      if (currentCommands) {
-        commandsRef.current = currentCommands;
-        setCommands(currentCommands);
-      }
-    }, [getCommands]);
+    const { signatureRef, executeCommandWithRetry } = useSignatureCommands();
 
     const [isVisible, setIsVisible] = React.useState(false);
 
@@ -118,45 +107,12 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
     }, []);
 
     const clearSignature = React.useCallback(() => {
-      const currentCommands = commands || commandsRef.current || getCommands();
+      executeCommandWithRetry('clear', onClear);
+    }, [executeCommandWithRetry, onClear]);
 
-      if (!currentCommands) {
-        let attempts = 0;
-        const maxAttempts = 5;
-
-        const tryGetCommands = () => {
-          attempts++;
-          const retryCommands =
-            commands || commandsRef.current || getCommands();
-          if (retryCommands) {
-            commandsRef.current = retryCommands;
-            setCommands(retryCommands);
-            retryCommands.clear();
-            onClear?.();
-          } else if (attempts < maxAttempts) {
-            setTimeout(tryGetCommands, 200);
-          }
-        };
-
-        setTimeout(tryGetCommands, 200);
-        return;
-      }
-
-      currentCommands.clear();
-      onClear?.();
-    }, [commands, getCommands, onClear]);
-
-    const createFileInfo = React.useCallback(
-      (nativeEvent: SignatureEvent['nativeEvent']): AssetSignature => ({
-        path: nativeEvent.path || '',
-        uri: nativeEvent.uri ? `file://${nativeEvent.uri}` : '',
-        name: nativeEvent.name || '',
-        size: nativeEvent.size || 0,
-        width: nativeEvent.width || 940,
-        height: nativeEvent.height || 788,
-      }),
-      []
-    );
+    const saveSignature = React.useCallback(() => {
+      executeCommandWithRetry('save');
+    }, [executeCommandWithRetry]);
 
     const handleSaveComplete = React.useCallback(
       (fileInfo: AssetSignature) => {
@@ -190,34 +146,8 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
           }
         }
       },
-      [createFileInfo, handleSaveComplete, onError]
+      [handleSaveComplete, onError]
     );
-    const saveSignature = React.useCallback(() => {
-      const currentCommands = commands || commandsRef.current || getCommands();
-
-      if (!currentCommands) {
-        let attempts = 0;
-        const maxAttempts = 5;
-
-        const tryGetCommands = () => {
-          attempts++;
-          const retryCommands =
-            commands || commandsRef.current || getCommands();
-          if (retryCommands) {
-            commandsRef.current = retryCommands;
-            setCommands(retryCommands);
-            retryCommands.save();
-          } else if (attempts < maxAttempts) {
-            setTimeout(tryGetCommands, 200);
-          }
-        };
-
-        setTimeout(tryGetCommands, 200);
-        return;
-      }
-
-      currentCommands.save();
-    }, [commands, getCommands]);
 
     const renderPage = React.useMemo(() => {
       switch (presentationStyle) {
@@ -450,6 +380,7 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       saveSignature,
       showBaseline,
       signatureColor,
+      signatureRef,
     ]);
 
     return <React.Fragment>{renderPage}</React.Fragment>;
