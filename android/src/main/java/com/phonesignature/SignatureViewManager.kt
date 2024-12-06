@@ -94,6 +94,16 @@ class SignatureViewManager : SimpleViewManager<SignatureView>() {
 
     private fun saveSignatureToGallery(view: SignatureView, fileName: String) {
         Log.d("SignatureViewManager", "saveSignatureToGallery: Starting to save $fileName")
+
+        if (view.isEmpty()) {
+            val errorEvent = Arguments.createMap().apply {
+                putBoolean("error", true)
+                putString("message", "Please draw your signature first")
+            }
+            sendEvent(view, "onSave", errorEvent)
+            return
+        }
+
         val context = view.context
         val contentResolver = context.contentResolver
 
@@ -165,6 +175,16 @@ class SignatureViewManager : SimpleViewManager<SignatureView>() {
 
     private fun saveSignatureToTemp(view: SignatureView, fileName: String) {
         Log.d("SignatureViewManager", "saveSignatureToTemp: Starting to save $fileName")
+
+        if (view.isEmpty()) {
+            val errorEvent = Arguments.createMap().apply {
+                putBoolean("error", true)
+                putString("message", "Please draw your signature first")
+            }
+            sendEvent(view, "onSave", errorEvent)
+            return
+        }
+
         try {
             val file = File(view.context.cacheDir, fileName)
             Log.d("SignatureViewManager", "saveSignatureToTemp: Saving to path: ${file.absolutePath}")

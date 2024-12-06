@@ -10,7 +10,8 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { Box, Text, Touchable } from './component';
-import { useManagerCommand } from './hooks';
+import { createFileInfo } from './helper';
+import { useSignatureCommands } from './hooks';
 
 export type AssetSignature = {
   path: string;
@@ -24,6 +25,7 @@ export type AssetSignature = {
 type SignaturePadProps = {
   onSave?: (file: AssetSignature) => void;
   onClear?: () => void;
+  onError?: () => void;
   backgroundColorButton?: string;
   isSaveToLibrary?: boolean;
   lineWidth?: number;
@@ -48,7 +50,7 @@ type RNSignatureViewProps = {
 const RNSignatureView =
   requireNativeComponent<RNSignatureViewProps>('RNSignatureView');
 
-type SignatureEvent = {
+export type SignatureEvent = {
   nativeEvent: {
     path: string;
     uri?: string;
@@ -56,6 +58,8 @@ type SignatureEvent = {
     width?: number;
     height?: number;
     size?: number;
+    error?: boolean;
+    message?: string;
   };
 };
 
@@ -63,6 +67,7 @@ export type SignaturePadRef = {
   open: () => void;
   close: () => void;
   onClear: () => void;
+  onSave: () => void;
 };
 
 const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
@@ -70,6 +75,7 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
     {
       onSave,
       onClear,
+      onError,
       backgroundColorButton,
       isSaveToLibrary = true,
       lineWidth = 1.5,
@@ -85,9 +91,10 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       open: onOpen,
       close: onClose,
       onClear: clearSignature,
+      onSave: saveSignature,
     }));
-    const signatureRef = React.useRef(null);
-    const getCommands = useManagerCommand(signatureRef);
+
+    const { signatureRef, executeCommandWithRetry } = useSignatureCommands();
 
     const [isVisible, setIsVisible] = React.useState(false);
 
@@ -100,31 +107,12 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
     }, []);
 
     const clearSignature = React.useCallback(() => {
-      const commands = getCommands();
-      if (commands) {
-        commands.clear();
-        onClear?.();
-      }
-    }, [getCommands, onClear]);
+      executeCommandWithRetry('clear', onClear);
+    }, [executeCommandWithRetry, onClear]);
 
     const saveSignature = React.useCallback(() => {
-      const commands = getCommands();
-      if (commands) {
-        commands.save();
-      }
-    }, [getCommands]);
-
-    const createFileInfo = React.useCallback(
-      (nativeEvent: SignatureEvent['nativeEvent']): AssetSignature => ({
-        path: nativeEvent.path || '',
-        uri: nativeEvent.uri ? `file://${nativeEvent.uri}` : '',
-        name: nativeEvent.name || '',
-        size: nativeEvent.size || 0,
-        width: nativeEvent.width || 940,
-        height: nativeEvent.height || 788,
-      }),
-      []
-    );
+      executeCommandWithRetry('save');
+    }, [executeCommandWithRetry]);
 
     const handleSaveComplete = React.useCallback(
       (fileInfo: AssetSignature) => {
@@ -138,18 +126,27 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
 
     const handleSave = React.useCallback(
       (event: SignatureEvent) => {
-        const fileInfo = createFileInfo(event.nativeEvent);
-        console.log('FileInfo created:', fileInfo);
-
-        if (!isSaveToLibrary) {
-          handleSaveComplete(fileInfo);
+        if (event.nativeEvent.error) {
+          if (onError) {
+            onError();
+          } else {
+            Alert.alert('Error', event.nativeEvent.message || '');
+          }
           return;
         }
 
-        handleSaveComplete(fileInfo);
-        Alert.alert('Success', 'Signature saved successfully!');
+        try {
+          const fileInfo = createFileInfo(event.nativeEvent);
+          handleSaveComplete(fileInfo);
+        } catch (error) {
+          if (onError) {
+            onError();
+          } else {
+            Alert.alert('Error', 'Please draw your signature first');
+          }
+        }
       },
-      [createFileInfo, isSaveToLibrary, handleSaveComplete]
+      [handleSaveComplete, onError]
     );
 
     const renderPage = React.useMemo(() => {
@@ -221,7 +218,7 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
           );
         case 'signature-pad':
           return (
-            <Box borderWidth={1} height="100%" width="100%">
+            <Box height="100%" width="100%">
               <RNSignatureView
                 ref={signatureRef}
                 style={styles.canvas}
@@ -383,6 +380,7 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       saveSignature,
       showBaseline,
       signatureColor,
+      signatureRef,
     ]);
 
     return <React.Fragment>{renderPage}</React.Fragment>;

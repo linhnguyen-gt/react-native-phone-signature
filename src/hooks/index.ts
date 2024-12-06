@@ -1,1 +1,1 @@
-export { default as useManagerCommand } from './useManagerCommand';
+export { default as useSignatureCommands } from './useSignatureCommands';
