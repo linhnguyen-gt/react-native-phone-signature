@@ -1,14 +1,11 @@
 import React from 'react';
-import { findNodeHandle, Platform, UIManager } from 'react-native';
+import { findNodeHandle, UIManager } from 'react-native';
 
 type CommandAction = 'save' | 'clear';
 type Commands = {
   save: () => void;
   clear: () => void;
 };
-
-const COMMAND_CLEAR = 1;
-const COMMAND_SAVE = 2;
 
 const useSignatureCommands = () => {
   const signatureRef = React.useRef<any>(null);
@@ -18,15 +15,6 @@ const useSignatureCommands = () => {
   const getCommands = React.useCallback(() => {
     const nodeHandle = findNodeHandle(signatureRef.current);
     if (!nodeHandle) return null;
-
-    if (Platform.OS === 'android') {
-      return {
-        clear: () =>
-          UIManager.dispatchViewManagerCommand(nodeHandle, COMMAND_CLEAR, []),
-        save: () =>
-          UIManager.dispatchViewManagerCommand(nodeHandle, COMMAND_SAVE, []),
-      };
-    }
 
     return {
       clear: () =>

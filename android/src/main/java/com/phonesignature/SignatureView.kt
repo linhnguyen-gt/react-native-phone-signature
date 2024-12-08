@@ -9,6 +9,17 @@ import java.io.File
 import java.io.FileOutputStream
 
 class SignatureView(context: Context) : View(context) {
+    init {
+        setWillNotDraw(false)
+        clipToOutline = true
+        setLayerType(LAYER_TYPE_HARDWARE, null)
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        clipBounds = Rect(0, 0, w, h)
+    }
+
     private val signaturePaint = Paint().apply {
         isAntiAlias = true
         style = Paint.Style.STROKE
@@ -214,10 +225,30 @@ class SignatureView(context: Context) : View(context) {
 
     fun setSignatureColor(color: String) {
         try {
-            signaturePaint.color = Color.parseColor(color)
+            val newColor = when (color.lowercase()) {
+                "red" -> Color.RED
+                "blue" -> Color.BLUE
+                "black" -> Color.BLACK
+                "green" -> Color.GREEN
+                "white" -> Color.WHITE
+                "gray", "grey" -> Color.GRAY
+                "darkgray", "darkgrey" -> Color.DKGRAY
+                "lightgray", "lightgrey" -> Color.LTGRAY
+                "yellow" -> Color.YELLOW
+                "cyan" -> Color.CYAN
+                "magenta" -> Color.MAGENTA
+                "transparent", "clear" -> Color.TRANSPARENT
+                "purple" -> Color.parseColor("#800080")
+                "brown" -> Color.parseColor("#A52A2A")
+                "orange" -> Color.parseColor("#FFA500")
+                else -> Color.parseColor(color) // For hex colors
+            }
+            signaturePaint.color = newColor
             invalidate()
         } catch (e: IllegalArgumentException) {
             Log.e("SignatureView", "Invalid color format: $color", e)
+            // Fallback to black if color parsing fails
+            signaturePaint.color = Color.BLACK
         }
     }
 }

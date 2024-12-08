@@ -22,7 +22,7 @@ class SignatureView: UIView {
     private var lastVelocityX: CGFloat = 0
     private var lastVelocityY: CGFloat = 0
     private var lastWidth: CGFloat = 6.0
-    private let smoothingFactor: CGFloat = 0.7
+    private let smoothingFactor: CGFloat = 0.8
     private var minWidth: CGFloat = 3.0
     private var maxWidth: CGFloat = 8.0
 
@@ -121,16 +121,17 @@ class SignatureView: UIView {
         lastVelocityY = lastVelocityY * smoothingFactor + velocityY * (1 - smoothingFactor)
 
         let speed = sqrt(lastVelocityX * lastVelocityX + lastVelocityY * lastVelocityY)
-        let normalizedSpeed = min(speed / 1000, 1.0)  // Adjusted speed normalization
+        let normalizedSpeed = min(speed / 1000, 1.0)
 
         let pressure = touch.force > 0 ? touch.force : 0.3
-        let targetWidth = strokeWidth * (1.3 - normalizedSpeed) * pressure
-        let clampedWidth = targetWidth.clamped(to: minWidth...maxWidth)
 
+        let targetWidth = strokeWidth * (1.3 - normalizedSpeed) * pressure
+        let clampedWidth = min(max(targetWidth, minWidth), maxWidth)
         lastWidth = lastWidth * 0.6 + clampedWidth * 0.4
 
         if var currentLine = lines.last {
             let distance = hypot(currentPoint.x - lastPoint.x, currentPoint.y - lastPoint.y)
+
             if distance > 1.0 {
                 if distance > 10 {
                     let steps = Int(distance / 5)
@@ -177,10 +178,45 @@ class SignatureView: UIView {
 
     @objc func setSignatureColor(_ color: String) {
         print("Setting signature color to:", color)
-        if color == "red" {
+        switch color.lowercased() {
+        case "red":
             strokeColor = .red
-        } else if let uiColor = UIColor(hexString: color) {
-            strokeColor = uiColor
+        case "blue":
+            strokeColor = .blue
+        case "black":
+            strokeColor = .black
+        case "green":
+            strokeColor = .green
+        case "white":
+            strokeColor = .white
+        case "gray", "grey":
+            strokeColor = .gray
+        case "darkgray", "darkgrey":
+            strokeColor = .darkGray
+        case "lightgray", "lightgrey":
+            strokeColor = .lightGray
+        case "yellow":
+            strokeColor = .yellow
+        case "orange":
+            strokeColor = .orange
+        case "purple":
+            strokeColor = .purple
+        case "brown":
+            strokeColor = .brown
+        case "cyan":
+            strokeColor = .cyan
+        case "magenta":
+            strokeColor = .magenta
+        case "clear":
+            strokeColor = .clear
+        default:
+            // Handle hex color
+            if let uiColor = UIColor(hexString: color) {
+                strokeColor = uiColor
+            } else {
+                print("Failed to parse color:", color)
+                strokeColor = .black // fallback to black if parsing fails
+            }
         }
         setNeedsDisplay()
     }
@@ -233,14 +269,14 @@ class SignatureView: UIView {
 
 extension UIColor {
     convenience init?(hexString: String) {
-        print("Converting hex color:", hexString)
-        var hex = hexString.trimmingCharacters(in: .whitespacesAndNewlines)
-        if hex.hasPrefix("#") {
-            hex.remove(at: hex.startIndex)
-        }
+        var hexSanitized = hexString.trimmingCharacters(in: .whitespacesAndNewlines)
+        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
 
         var rgb: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&rgb)
+
+        guard hexSanitized.count == 6 && Scanner(string: hexSanitized).scanHexInt64(&rgb) else {
+            return nil
+        }
 
         let r = CGFloat((rgb & 0xFF0000) >> 16) / 255.0
         let g = CGFloat((rgb & 0x00FF00) >> 8) / 255.0
