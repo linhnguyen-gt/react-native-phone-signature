@@ -8,7 +8,7 @@ export default function App() {
   const signaturePadRef = React.useRef<SignaturePadRef>(null);
   const [presentationStyle, setPresentationStyle] = React.useState<
     'fullScreen' | 'modal' | 'pageSheet' | 'signature-pad'
-  >('modal');
+  >();
 
   const handleOpenModal = React.useCallback(
     (style: 'fullScreen' | 'modal' | 'pageSheet' | 'signature-pad') => {
@@ -17,15 +17,6 @@ export default function App() {
     },
     []
   );
-
-  const handleSave = React.useCallback(() => {
-    signaturePadRef.current?.onSave();
-    Alert.alert('Success', `Signature saved!`);
-  }, []);
-
-  const handleClear = React.useCallback(() => {
-    signaturePadRef.current?.onClear();
-  }, []);
 
   return (
     <React.Fragment>
@@ -82,40 +73,12 @@ export default function App() {
             </Text>
           </TouchableOpacity>
         </View>
-
-        <View style={styles.inlineContainer}>
-          <Text style={styles.inlineTitle}>Inline Signature Pad:</Text>
-          <View style={{ borderWidth: 1, borderColor: 'red' }}>
-            <SignaturePad
-              ref={signaturePadRef}
-              presentationStyle="signature-pad"
-              showBaseline={true}
-              signatureColor="blue"
-              onSave={(file) => console.log('Signature saved!', file)}
-              onClear={() => console.log('Signature cleared!')}
-            />
-            <View style={styles.inlineButtonContainer}>
-              <TouchableOpacity
-                style={[styles.inlineButton, styles.clearButton]}
-                onPress={handleClear}
-              >
-                <Text style={styles.clearButtonText}>Clear</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.inlineButton, styles.saveButton]}
-                onPress={handleSave}
-              >
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
       </View>
       <SignaturePad
         ref={signaturePadRef}
-        onSave={handleSave}
+        onSave={(file) => console.log('Signature saved!', file)}
         onClear={() => console.log('Signature cleared!')}
-        // onError={() => Alert.alert('Error', 'Please draw your signature first')}
+        onError={() => Alert.alert('Error', 'Please draw your signature first')}
         showBaseline={true}
         isSaveToLibrary={true}
         closeAfterSave={true}
@@ -133,6 +96,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#ecf0f1',
   },
   buttonContainer: {
     marginBottom: 20,
