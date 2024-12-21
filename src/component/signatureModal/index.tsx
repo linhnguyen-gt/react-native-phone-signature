@@ -128,8 +128,8 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
                   shadowOpacity={0.3}
                   shadowRadius={6}
                   elevation={5}
-                  backgroundColor={backgroundColorButton ?? '#2563EB'}
-                  shadowColor={backgroundColorButton ?? '#2563EB'}
+                  backgroundColor={backgroundColorButton}
+                  shadowColor={backgroundColorButton}
                   onPress={saveSignature}
                 >
                   <Text color="#FFFFFF" fontSize={16} fontWeight="700">

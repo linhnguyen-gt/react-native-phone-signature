@@ -1,12 +1,11 @@
 import React from 'react';
 import {
   Alert,
-  Modal,
   requireNativeComponent,
   StyleSheet,
   type ViewStyle,
 } from 'react-native';
-import { Box, SignatureModal, Text, Touchable } from './component';
+import { Box, SignatureBottomSheet, SignatureModal } from './component';
 import { createFileInfo } from './helper';
 import { useSignatureCommands } from './hooks';
 
@@ -191,125 +190,14 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
           );
         default:
           return (
-            <Modal
-              visible={isVisible}
-              animationType="fade"
-              transparent={true}
-              onRequestClose={onClose}
-            >
-              <Box
-                flex={1}
-                backgroundColor="rgba(0, 0, 0, 0.5)"
-                justifyContent="flex-end"
-              >
-                <Box
-                  backgroundColor="#FFFFFF"
-                  borderTopLeftRadius={24}
-                  borderTopRightRadius={24}
-                  paddingTop={20}
-                  paddingHorizontal={16}
-                  paddingBottom={24}
-                >
-                  <Box
-                    flexDirection="row"
-                    alignItems="center"
-                    justifyContent="center"
-                    position="relative"
-                    marginBottom={12}
-                  >
-                    <Text
-                      fontSize={20}
-                      fontWeight="600"
-                      color="#1a1a1a"
-                      textAlign="center"
-                    >
-                      Your Signature
-                    </Text>
-                    <Touchable
-                      position="absolute"
-                      right={0}
-                      top={0}
-                      padding={8}
-                      onPress={onClose}
-                    >
-                      <Text fontSize={18} color="#666666">
-                        ✕
-                      </Text>
-                    </Touchable>
-                  </Box>
-
-                  <Text
-                    fontSize={14}
-                    color="#666666"
-                    textAlign="center"
-                    marginBottom={16}
-                  >
-                    Please sign within the box below
-                  </Text>
-
-                  <Box
-                    height={300}
-                    backgroundColor="#ffffff"
-                    borderRadius={12}
-                    shadowColor="#000"
-                    shadowOffset={{
-                      width: 0,
-                      height: 2,
-                    }}
-                    shadowOpacity={0.1}
-                    shadowRadius={8}
-                    elevation={5}
-                    borderWidth={1}
-                    borderColor="#E5E7EB"
-                    marginBottom={20}
-                    overflow="hidden"
-                  >
-                    {renderSignaturePad}
-                  </Box>
-
-                  <Box gap={12}>
-                    <Box flexDirection="row" gap={12}>
-                      <Touchable
-                        paddingVertical={14}
-                        borderRadius={12}
-                        alignItems="center"
-                        justifyContent="center"
-                        flex={1}
-                        backgroundColor="#F3F4F6"
-                        borderWidth={1}
-                        borderColor="#E5E7EB"
-                        onPress={clearSignature}
-                      >
-                        <Text color="#374151" fontSize={16} fontWeight="500">
-                          Clear
-                        </Text>
-                      </Touchable>
-                      <Touchable
-                        paddingVertical={14}
-                        borderRadius={12}
-                        alignItems="center"
-                        justifyContent="center"
-                        flex={1}
-                        shadowOffset={{
-                          width: 0,
-                          height: 2,
-                        }}
-                        shadowOpacity={0.25}
-                        shadowRadius={4}
-                        elevation={4}
-                        backgroundColor={backgroundColorButton}
-                        shadowColor={backgroundColorButton}
-                        onPress={saveSignature}
-                      >
-                        <Text color="#FFFFFF" fontSize={16} fontWeight="600">
-                          Save
-                        </Text>
-                      </Touchable>
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
-            </Modal>
+            <SignatureBottomSheet
+              isVisible={isVisible}
+              onClose={onClose}
+              renderSignaturePad={renderSignaturePad}
+              clearSignature={clearSignature}
+              saveSignature={saveSignature}
+              backgroundColorButton={backgroundColorButton}
+            />
           );
       }
     }, [
@@ -327,121 +215,8 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
 );
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 20,
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    marginBottom: 12,
-  },
-  closeButton: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    padding: 8,
-  },
-  closeButtonText: {
-    fontSize: 20,
-    color: '#666666',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  canvasContainer: {
-    height: 300,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    marginBottom: 20,
-    overflow: 'hidden',
-  },
   canvas: {
     flex: 1,
-  },
-  buttonContainer: {
-    gap: 12,
-  },
-  buttonGroup: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  button: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  clearButton: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  saveButton: {
-    flex: 1,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  clearButtonText: {
-    color: '#374151',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  cancelButtonText: {
-    color: '#374151',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  centeredModal: {
-    justifyContent: 'center',
-  },
-  centeredContent: {
-    marginHorizontal: 16,
-    maxHeight: '90%',
-    borderRadius: 24,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
   },
 });
 
