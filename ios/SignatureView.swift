@@ -22,7 +22,7 @@ class SignatureView: UIView {
     private var lastVelocityX: CGFloat = 0
     private var lastVelocityY: CGFloat = 0
     private var lastWidth: CGFloat = 6.0
-    private let smoothingFactor: CGFloat = 0.7
+    private let smoothingFactor: CGFloat = 0.8
     private var minWidth: CGFloat = 3.0
     private var maxWidth: CGFloat = 8.0
 
@@ -65,22 +65,30 @@ class SignatureView: UIView {
                     let currentPoint = line.points[i]
                     let nextPoint = line.points[i + 1]
 
+                    let midPoint = CGPoint(
+                        x: (currentPoint.x + nextPoint.x) / 2,
+                        y: (currentPoint.y + nextPoint.y) / 2
+                    )
+
                     if i == 0 {
-                        let midPoint = CGPoint(
-                            x: (currentPoint.x + nextPoint.x) / 2,
-                            y: (currentPoint.y + nextPoint.y) / 2
-                        )
                         path.addQuadCurve(to: midPoint, controlPoint: currentPoint)
-                    } else if i == line.points.count - 2 {
-                        path.addQuadCurve(to: nextPoint, controlPoint: currentPoint)
                     } else {
-                        let midPoint = CGPoint(
-                            x: (currentPoint.x + nextPoint.x) / 2,
-                            y: (currentPoint.y + nextPoint.y) / 2
+                        let previousPoint = i > 0 ? line.points[i - 1] : currentPoint
+                        let controlPoint = CGPoint(
+                            x: currentPoint.x + (nextPoint.x - previousPoint.x) * 0.12,
+                            y: currentPoint.y + (nextPoint.y - previousPoint.y) * 0.12
                         )
-                        path.addQuadCurve(to: midPoint, controlPoint: currentPoint)
+                        path.addQuadCurve(to: midPoint, controlPoint: controlPoint)
                     }
                 }
+
+                let lastPoint = line.points.last!
+                let secondLastPoint = line.points[line.points.count - 2]
+                let controlPoint = CGPoint(
+                    x: secondLastPoint.x + (lastPoint.x - secondLastPoint.x) * 0.4,
+                    y: secondLastPoint.y + (lastPoint.y - secondLastPoint.y) * 0.4
+                )
+                path.addQuadCurve(to: lastPoint, controlPoint: controlPoint)
             }
 
             line.color.setStroke()
@@ -117,29 +125,32 @@ class SignatureView: UIView {
         let velocityX = (currentPoint.x - lastPoint.x)
         let velocityY = (currentPoint.y - lastPoint.y)
 
+        let smoothingFactor: CGFloat = 0.85
+
         lastVelocityX = lastVelocityX * smoothingFactor + velocityX * (1 - smoothingFactor)
         lastVelocityY = lastVelocityY * smoothingFactor + velocityY * (1 - smoothingFactor)
 
         let speed = sqrt(lastVelocityX * lastVelocityX + lastVelocityY * lastVelocityY)
-        let normalizedSpeed = min(speed / 1000, 1.0)  // Adjusted speed normalization
+        let normalizedSpeed = min(speed / 1000, 1.0)
 
         let pressure = touch.force > 0 ? touch.force : 0.3
-        let targetWidth = strokeWidth * (1.3 - normalizedSpeed) * pressure
-        let clampedWidth = targetWidth.clamped(to: minWidth...maxWidth)
 
-        lastWidth = lastWidth * 0.6 + clampedWidth * 0.4
+        let targetWidth = strokeWidth * (1.4 - normalizedSpeed * 0.8) * pressure
+        let clampedWidth = min(max(targetWidth, minWidth), maxWidth)
+        lastWidth = lastWidth * 0.7 + clampedWidth * 0.3
 
         if var currentLine = lines.last {
             let distance = hypot(currentPoint.x - lastPoint.x, currentPoint.y - lastPoint.y)
+
             if distance > 1.0 {
-                if distance > 10 {
-                    let steps = Int(distance / 5)
+                if distance > 8 {
+                    let steps = Int(distance / 2)
                     for i in 1...steps {
                         let t = CGFloat(i) / CGFloat(steps + 1)
-                        let interpolatedPoint = CGPoint(
-                            x: lastPoint.x + (currentPoint.x - lastPoint.x) * t,
-                            y: lastPoint.y + (currentPoint.y - lastPoint.y) * t
-                        )
+                        let tx = (1 - t) * (1 - t) * lastPoint.x + 2 * (1 - t) * t * currentPoint.x + t * t * currentPoint.x
+                        let ty = (1 - t) * (1 - t) * lastPoint.y + 2 * (1 - t) * t * currentPoint.y + t * t * currentPoint.y
+
+                        let interpolatedPoint = CGPoint(x: tx, y: ty)
                         currentLine.points.append(interpolatedPoint)
                         currentLine.widths.append(lastWidth)
                         currentLine.velocities.append(normalizedSpeed)
@@ -177,10 +188,45 @@ class SignatureView: UIView {
 
     @objc func setSignatureColor(_ color: String) {
         print("Setting signature color to:", color)
-        if color == "red" {
+        switch color.lowercased() {
+        case "red":
             strokeColor = .red
-        } else if let uiColor = UIColor(hexString: color) {
-            strokeColor = uiColor
+        case "blue":
+            strokeColor = .blue
+        case "black":
+            strokeColor = .black
+        case "green":
+            strokeColor = .green
+        case "white":
+            strokeColor = .white
+        case "gray", "grey":
+            strokeColor = .gray
+        case "darkgray", "darkgrey":
+            strokeColor = .darkGray
+        case "lightgray", "lightgrey":
+            strokeColor = .lightGray
+        case "yellow":
+            strokeColor = .yellow
+        case "orange":
+            strokeColor = .orange
+        case "purple":
+            strokeColor = .purple
+        case "brown":
+            strokeColor = .brown
+        case "cyan":
+            strokeColor = .cyan
+        case "magenta":
+            strokeColor = .magenta
+        case "clear":
+            strokeColor = .clear
+        default:
+            // Handle hex color
+            if let uiColor = UIColor(hexString: color) {
+                strokeColor = uiColor
+            } else {
+                print("Failed to parse color:", color)
+                strokeColor = .black
+            }
         }
         setNeedsDisplay()
     }
@@ -233,14 +279,14 @@ class SignatureView: UIView {
 
 extension UIColor {
     convenience init?(hexString: String) {
-        print("Converting hex color:", hexString)
-        var hex = hexString.trimmingCharacters(in: .whitespacesAndNewlines)
-        if hex.hasPrefix("#") {
-            hex.remove(at: hex.startIndex)
-        }
+        var hexSanitized = hexString.trimmingCharacters(in: .whitespacesAndNewlines)
+        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
 
         var rgb: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&rgb)
+
+        guard hexSanitized.count == 6 && Scanner(string: hexSanitized).scanHexInt64(&rgb) else {
+            return nil
+        }
 
         let r = CGFloat((rgb & 0xFF0000) >> 16) / 255.0
         let g = CGFloat((rgb & 0x00FF00) >> 8) / 255.0

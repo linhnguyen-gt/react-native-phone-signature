@@ -3,13 +3,10 @@ import {
   Alert,
   Modal,
   requireNativeComponent,
-  SafeAreaView,
   StyleSheet,
-  TouchableOpacity,
-  View,
   type ViewStyle,
 } from 'react-native';
-import { Box, Text, Touchable } from './component';
+import { Box, SignatureModal, Text, Touchable } from './component';
 import { createFileInfo } from './helper';
 import { useSignatureCommands } from './hooks';
 
@@ -32,7 +29,7 @@ type SignaturePadProps = {
   showBaseline?: boolean;
   signatureColor?: string;
   outputFormat?: 'JPEG' | 'PNG';
-  presentationStyle?: 'fullScreen' | 'modal' | 'signature-pad' | 'pageSheet';
+  presentationStyle?: 'modal' | 'signature-pad';
   closeAfterSave?: boolean;
 };
 
@@ -76,14 +73,14 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       onSave,
       onClear,
       onError,
-      backgroundColorButton,
+      backgroundColorButton = '#0066FF',
       isSaveToLibrary = true,
       lineWidth = 1.5,
       showBaseline = false,
       signatureColor = '#000000',
       outputFormat = 'JPEG',
       closeAfterSave = true,
-      presentationStyle = 'pageSheet',
+      presentationStyle,
     },
     ref
   ) => {
@@ -149,87 +146,47 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
       [handleSaveComplete, onError]
     );
 
+    const renderSignaturePad = React.useMemo(() => {
+      return (
+        <RNSignatureView
+          ref={signatureRef}
+          style={styles.canvas}
+          strokeWidth={lineWidth}
+          onSave={handleSave}
+          onClear={onClear}
+          isSaveToLibrary={isSaveToLibrary}
+          showBaseline={showBaseline}
+          signatureColor={signatureColor}
+          outputFormat={outputFormat}
+        />
+      );
+    }, [
+      signatureRef,
+      lineWidth,
+      handleSave,
+      onClear,
+      isSaveToLibrary,
+      showBaseline,
+      signatureColor,
+      outputFormat,
+    ]);
+
     const renderPage = React.useMemo(() => {
       switch (presentationStyle) {
         case 'modal':
           return (
-            <Modal
-              visible={isVisible}
-              animationType="fade"
-              transparent={true}
-              onRequestClose={onClose}
-            >
-              <SafeAreaView style={[styles.safeArea, styles.centeredModal]}>
-                <View style={[styles.modalContent, styles.centeredContent]}>
-                  <View style={styles.header}>
-                    <Text style={styles.title}>Your Signature</Text>
-                    <TouchableOpacity
-                      style={styles.closeButton}
-                      onPress={onClose}
-                    >
-                      <Text style={styles.closeButtonText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <Text style={styles.subtitle}>
-                    Please sign within the box below
-                  </Text>
-
-                  <View style={styles.canvasContainer}>
-                    <RNSignatureView
-                      ref={signatureRef}
-                      style={styles.canvas}
-                      strokeWidth={lineWidth}
-                      onSave={handleSave}
-                      onClear={onClear}
-                      isSaveToLibrary={isSaveToLibrary}
-                      showBaseline={showBaseline}
-                      signatureColor={signatureColor}
-                      outputFormat={outputFormat}
-                    />
-                  </View>
-
-                  <View style={styles.buttonContainer}>
-                    <View style={styles.buttonGroup}>
-                      <TouchableOpacity
-                        style={[styles.button, styles.clearButton]}
-                        onPress={clearSignature}
-                      >
-                        <Text style={styles.cancelButtonText}>Clear</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[
-                          styles.button,
-                          styles.saveButton,
-                          {
-                            backgroundColor: backgroundColorButton ?? '#0066FF',
-                            shadowColor: backgroundColorButton ?? '#0066FF',
-                          },
-                        ]}
-                        onPress={saveSignature}
-                      >
-                        <Text style={styles.saveButtonText}>Save</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              </SafeAreaView>
-            </Modal>
+            <SignatureModal
+              isVisible={isVisible}
+              onClose={onClose}
+              renderSignaturePad={renderSignaturePad}
+              clearSignature={clearSignature}
+              saveSignature={saveSignature}
+            />
           );
         case 'signature-pad':
           return (
             <Box height="100%" width="100%">
-              <RNSignatureView
-                ref={signatureRef}
-                style={styles.canvas}
-                strokeWidth={lineWidth}
-                onSave={handleSave}
-                onClear={onClear}
-                isSaveToLibrary={isSaveToLibrary}
-                showBaseline={showBaseline}
-                signatureColor={signatureColor}
-                outputFormat={outputFormat}
-              />
+              {renderSignaturePad}
             </Box>
           );
         default:
@@ -241,7 +198,6 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
               onRequestClose={onClose}
             >
               <Box
-                safeArea
                 flex={1}
                 backgroundColor="rgba(0, 0, 0, 0.5)"
                 justifyContent="flex-end"
@@ -308,17 +264,7 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
                     marginBottom={20}
                     overflow="hidden"
                   >
-                    <RNSignatureView
-                      ref={signatureRef}
-                      style={styles.canvas}
-                      strokeWidth={lineWidth}
-                      onSave={handleSave}
-                      onClear={onClear}
-                      isSaveToLibrary={isSaveToLibrary}
-                      showBaseline={showBaseline}
-                      signatureColor={signatureColor}
-                      outputFormat={outputFormat}
-                    />
+                    {renderSignaturePad}
                   </Box>
 
                   <Box gap={12}>
@@ -351,8 +297,8 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
                         shadowOpacity={0.25}
                         shadowRadius={4}
                         elevation={4}
-                        backgroundColor={backgroundColorButton ?? '#0066FF'}
-                        shadowColor={backgroundColorButton ?? '#0066FF'}
+                        backgroundColor={backgroundColorButton}
+                        shadowColor={backgroundColorButton}
                         onPress={saveSignature}
                       >
                         <Text color="#FFFFFF" fontSize={16} fontWeight="600">
@@ -369,18 +315,11 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
     }, [
       backgroundColorButton,
       clearSignature,
-      handleSave,
-      isSaveToLibrary,
       isVisible,
-      lineWidth,
-      onClear,
       onClose,
-      outputFormat,
       presentationStyle,
+      renderSignaturePad,
       saveSignature,
-      showBaseline,
-      signatureColor,
-      signatureRef,
     ]);
 
     return <React.Fragment>{renderPage}</React.Fragment>;

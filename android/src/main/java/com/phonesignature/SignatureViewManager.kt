@@ -15,6 +15,9 @@ import com.facebook.react.uimanager.events.RCTEventEmitter
 import java.io.File
 import java.io.FileOutputStream
 import android.util.Log
+import android.graphics.Color
+import com.facebook.react.bridge.ReadableType
+import com.facebook.react.bridge.Dynamic
 
 class SignatureViewManager : SimpleViewManager<SignatureView>() {
     private var isSaveToLibrary: Boolean = true
@@ -22,7 +25,10 @@ class SignatureViewManager : SimpleViewManager<SignatureView>() {
     override fun getName() = "RNSignatureView"
 
     override fun createViewInstance(context: ThemedReactContext): SignatureView {
-        return SignatureView(context)
+        return SignatureView(context).apply {
+            elevation = 0f
+            translationZ = 0f
+        }
     }
 
     @ReactProp(name = "strokeWidth", defaultFloat = 6f)
@@ -58,6 +64,28 @@ class SignatureViewManager : SimpleViewManager<SignatureView>() {
         }
     }
 
+    @ReactProp(name = "backgroundColor")
+    fun setBackgroundColor(view: SignatureView, color: Dynamic?) {
+        color?.let {
+            when (it.type) {
+                ReadableType.Number -> {
+                    view.setBackgroundColor(it.asInt())
+                }
+                ReadableType.String -> {
+                    try {
+                        val backgroundColor = Color.parseColor(it.asString())
+                        view.setBackgroundColor(backgroundColor)
+                    } catch (e: IllegalArgumentException) {
+                        Log.e(TAG, "Invalid background color format: ${it.asString()}", e)
+                    }
+                }
+                else -> {
+                    Log.e(TAG, "Invalid background color type: ${it.type}")
+                }
+            }
+        }
+    }
+
     override fun getExportedCustomDirectEventTypeConstants(): Map<String, Any> {
         return MapBuilder.builder<String, Any>()
             .put("onSave", MapBuilder.of("registrationName", "onSave"))
@@ -72,17 +100,14 @@ class SignatureViewManager : SimpleViewManager<SignatureView>() {
         )
     }
 
-    override fun receiveCommand(view: SignatureView, commandId: Int, args: ReadableArray?) {
-        Log.d("SignatureViewManager", "receiveCommand: commandId=$commandId")
+    override fun receiveCommand(view: SignatureView, commandId: String, args: ReadableArray?) {
         when (commandId) {
-            COMMAND_CLEAR -> {
-                Log.d("SignatureViewManager", "Clearing signature")
+            "clear" -> {
                 view.clear()
                 sendEvent(view, "onClear")
             }
-            COMMAND_SAVE -> {
+            "save" -> {
                 val fileName = "signature_${System.currentTimeMillis()}.jpg"
-                Log.d("SignatureViewManager", "Saving signature: fileName=$fileName, isSaveToLibrary=$isSaveToLibrary")
                 if (isSaveToLibrary) {
                     saveSignatureToGallery(view, fileName)
                 } else {
