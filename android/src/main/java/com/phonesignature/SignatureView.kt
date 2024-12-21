@@ -32,8 +32,9 @@ class SignatureView(context: Context) : View(context) {
     private val baselinePaint = Paint().apply {
         isAntiAlias = true
         style = Paint.Style.STROKE
-        strokeWidth = 1f
-        color = Color.parseColor("#CCCCCC")
+        strokeWidth = 2f
+        color = Color.GRAY
+        alpha = 120
     }
 
     private val guidelinePaint = Paint().apply {
@@ -56,6 +57,8 @@ class SignatureView(context: Context) : View(context) {
     private var showBaseline: Boolean = false
     private var outputFormat: Bitmap.CompressFormat = Bitmap.CompressFormat.JPEG
 
+    private var customBackgroundColor: Int = Color.WHITE
+
     fun setShowBaseline(show: Boolean) {
         showBaseline = show
         invalidate()
@@ -69,11 +72,7 @@ class SignatureView(context: Context) : View(context) {
     }
 
     override fun onDraw(canvas: Canvas) {
-        if (outputFormat != Bitmap.CompressFormat.PNG) {
-            canvas.drawColor(Color.WHITE)
-        } else {
-            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
-        }
+        canvas.drawColor(customBackgroundColor)
 
         val baselineY = height * 0.7f
         val topGuidelineY = baselineY - 60f
@@ -250,5 +249,10 @@ class SignatureView(context: Context) : View(context) {
             // Fallback to black if color parsing fails
             signaturePaint.color = Color.BLACK
         }
+    }
+
+    override fun setBackgroundColor(color: Int) {
+        customBackgroundColor = color
+        invalidate()
     }
 }

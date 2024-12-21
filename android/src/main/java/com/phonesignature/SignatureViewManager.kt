@@ -15,6 +15,9 @@ import com.facebook.react.uimanager.events.RCTEventEmitter
 import java.io.File
 import java.io.FileOutputStream
 import android.util.Log
+import android.graphics.Color
+import com.facebook.react.bridge.ReadableType
+import com.facebook.react.bridge.Dynamic
 
 class SignatureViewManager : SimpleViewManager<SignatureView>() {
     private var isSaveToLibrary: Boolean = true
@@ -58,6 +61,28 @@ class SignatureViewManager : SimpleViewManager<SignatureView>() {
         Log.d(TAG, "setOutputFormat: $format")
         format?.let {
             view.setOutputFormat(it)
+        }
+    }
+
+    @ReactProp(name = "backgroundColor")
+    fun setBackgroundColor(view: SignatureView, color: Dynamic?) {
+        color?.let {
+            when (it.type) {
+                ReadableType.Number -> {
+                    view.setBackgroundColor(it.asInt())
+                }
+                ReadableType.String -> {
+                    try {
+                        val backgroundColor = Color.parseColor(it.asString())
+                        view.setBackgroundColor(backgroundColor)
+                    } catch (e: IllegalArgumentException) {
+                        Log.e(TAG, "Invalid background color format: ${it.asString()}", e)
+                    }
+                }
+                else -> {
+                    Log.e(TAG, "Invalid background color type: ${it.type}")
+                }
+            }
         }
     }
 

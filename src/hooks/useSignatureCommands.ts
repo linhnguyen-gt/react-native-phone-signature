@@ -13,14 +13,26 @@ const useSignatureCommands = () => {
   const [commands, setCommands] = React.useState<Commands | null>(null);
 
   const getCommands = React.useCallback(() => {
-    const nodeHandle = findNodeHandle(signatureRef.current);
-    if (!nodeHandle) return null;
+    if (signatureRef.current) {
+      const nodeHandle = findNodeHandle(signatureRef.current);
+      if (!nodeHandle) {
+        commandsRef.current = null;
+        setCommands(null);
+        return null;
+      }
 
-    return {
-      clear: () =>
-        UIManager.dispatchViewManagerCommand(nodeHandle, 'clear', []),
-      save: () => UIManager.dispatchViewManagerCommand(nodeHandle, 'save', []),
-    };
+      const newCommands = {
+        clear: () =>
+          UIManager.dispatchViewManagerCommand(nodeHandle, 'clear', []),
+        save: () =>
+          UIManager.dispatchViewManagerCommand(nodeHandle, 'save', []),
+      };
+
+      commandsRef.current = newCommands;
+      setCommands(newCommands);
+      return newCommands;
+    }
+    return null;
   }, []);
 
   const executeCommandWithRetry = React.useCallback(
@@ -30,11 +42,11 @@ const useSignatureCommands = () => {
 
       const getCommandsWithRetry = async (attempts = 0): Promise<void> => {
         const currentCommands =
-          commands || commandsRef.current || getCommands();
+          attempts === 0
+            ? getCommands()
+            : commands || commandsRef.current || getCommands();
 
         if (currentCommands) {
-          commandsRef.current = currentCommands;
-          setCommands(currentCommands);
           currentCommands[action]();
           callback?.();
           return;
@@ -44,6 +56,8 @@ const useSignatureCommands = () => {
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
           return getCommandsWithRetry(attempts + 1);
         }
+
+        console.warn('Failed to execute command after max attempts');
       };
 
       await getCommandsWithRetry();
@@ -52,11 +66,12 @@ const useSignatureCommands = () => {
   );
 
   React.useEffect(() => {
-    const currentCommands = getCommands();
-    if (currentCommands) {
-      commandsRef.current = currentCommands;
-      setCommands(currentCommands);
-    }
+    getCommands();
+
+    return () => {
+      commandsRef.current = null;
+      setCommands(null);
+    };
   }, [getCommands]);
 
   return {

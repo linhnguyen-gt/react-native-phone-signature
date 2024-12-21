@@ -65,22 +65,30 @@ class SignatureView: UIView {
                     let currentPoint = line.points[i]
                     let nextPoint = line.points[i + 1]
 
+                    let midPoint = CGPoint(
+                        x: (currentPoint.x + nextPoint.x) / 2,
+                        y: (currentPoint.y + nextPoint.y) / 2
+                    )
+
                     if i == 0 {
-                        let midPoint = CGPoint(
-                            x: (currentPoint.x + nextPoint.x) / 2,
-                            y: (currentPoint.y + nextPoint.y) / 2
-                        )
                         path.addQuadCurve(to: midPoint, controlPoint: currentPoint)
-                    } else if i == line.points.count - 2 {
-                        path.addQuadCurve(to: nextPoint, controlPoint: currentPoint)
                     } else {
-                        let midPoint = CGPoint(
-                            x: (currentPoint.x + nextPoint.x) / 2,
-                            y: (currentPoint.y + nextPoint.y) / 2
+                        let previousPoint = i > 0 ? line.points[i - 1] : currentPoint
+                        let controlPoint = CGPoint(
+                            x: currentPoint.x + (nextPoint.x - previousPoint.x) * 0.12,
+                            y: currentPoint.y + (nextPoint.y - previousPoint.y) * 0.12
                         )
-                        path.addQuadCurve(to: midPoint, controlPoint: currentPoint)
+                        path.addQuadCurve(to: midPoint, controlPoint: controlPoint)
                     }
                 }
+
+                let lastPoint = line.points.last!
+                let secondLastPoint = line.points[line.points.count - 2]
+                let controlPoint = CGPoint(
+                    x: secondLastPoint.x + (lastPoint.x - secondLastPoint.x) * 0.4,
+                    y: secondLastPoint.y + (lastPoint.y - secondLastPoint.y) * 0.4
+                )
+                path.addQuadCurve(to: lastPoint, controlPoint: controlPoint)
             }
 
             line.color.setStroke()
@@ -117,6 +125,8 @@ class SignatureView: UIView {
         let velocityX = (currentPoint.x - lastPoint.x)
         let velocityY = (currentPoint.y - lastPoint.y)
 
+        let smoothingFactor: CGFloat = 0.85
+
         lastVelocityX = lastVelocityX * smoothingFactor + velocityX * (1 - smoothingFactor)
         lastVelocityY = lastVelocityY * smoothingFactor + velocityY * (1 - smoothingFactor)
 
@@ -125,22 +135,22 @@ class SignatureView: UIView {
 
         let pressure = touch.force > 0 ? touch.force : 0.3
 
-        let targetWidth = strokeWidth * (1.3 - normalizedSpeed) * pressure
+        let targetWidth = strokeWidth * (1.4 - normalizedSpeed * 0.8) * pressure
         let clampedWidth = min(max(targetWidth, minWidth), maxWidth)
-        lastWidth = lastWidth * 0.6 + clampedWidth * 0.4
+        lastWidth = lastWidth * 0.7 + clampedWidth * 0.3
 
         if var currentLine = lines.last {
             let distance = hypot(currentPoint.x - lastPoint.x, currentPoint.y - lastPoint.y)
 
             if distance > 1.0 {
-                if distance > 10 {
-                    let steps = Int(distance / 5)
+                if distance > 8 {
+                    let steps = Int(distance / 2)
                     for i in 1...steps {
                         let t = CGFloat(i) / CGFloat(steps + 1)
-                        let interpolatedPoint = CGPoint(
-                            x: lastPoint.x + (currentPoint.x - lastPoint.x) * t,
-                            y: lastPoint.y + (currentPoint.y - lastPoint.y) * t
-                        )
+                        let tx = (1 - t) * (1 - t) * lastPoint.x + 2 * (1 - t) * t * currentPoint.x + t * t * currentPoint.x
+                        let ty = (1 - t) * (1 - t) * lastPoint.y + 2 * (1 - t) * t * currentPoint.y + t * t * currentPoint.y
+
+                        let interpolatedPoint = CGPoint(x: tx, y: ty)
                         currentLine.points.append(interpolatedPoint)
                         currentLine.widths.append(lastWidth)
                         currentLine.velocities.append(normalizedSpeed)
@@ -215,7 +225,7 @@ class SignatureView: UIView {
                 strokeColor = uiColor
             } else {
                 print("Failed to parse color:", color)
-                strokeColor = .black // fallback to black if parsing fails
+                strokeColor = .black
             }
         }
         setNeedsDisplay()
