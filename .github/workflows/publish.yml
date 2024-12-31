@@ -22,13 +22,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Enable Corepack
-        shell: bash
         run: |
-          corepack enable
+          sudo corepack enable
           corepack prepare yarn@4.5.1 --activate
 
       - name: Install dependencies
-        shell: bash
         run: yarn install
 
       - name: Type check
