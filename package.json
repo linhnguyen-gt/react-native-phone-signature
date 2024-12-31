@@ -1,6 +1,6 @@
 {
   "name": "@linhnguyen96114/react-native-phone-signature",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A React Native signature component using native drawing APIs for iOS (UIKit) and Android (Canvas)",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
@@ -32,7 +32,8 @@
     "!**/__tests__",
     "!**/__fixtures__",
     "!**/__mocks__",
-    "!**/.*"
+    "!**/.*",
+    "index.d.ts"
   ],
   "scripts": {
     "example": "yarn workspace react-native-phone-signature-example",
