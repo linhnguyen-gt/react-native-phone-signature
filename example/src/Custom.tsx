@@ -1,3 +1,7 @@
+import SignaturePad, {
+  type AssetSignature,
+  type SignaturePadRef,
+} from '@linhnguyen96114/react-native-phone-signature';
 import React from 'react';
 import {
   Alert,
@@ -7,10 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import SignaturePad, {
-  type AssetSignature,
-  type SignaturePadRef,
-} from 'react-native-phone-signature';
 import { useNavigation } from './NavigationContext';
 
 const Custom = () => {

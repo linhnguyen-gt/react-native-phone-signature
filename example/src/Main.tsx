@@ -1,9 +1,9 @@
-import React from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SignaturePad, {
   type AssetSignature,
   type SignaturePadRef,
-} from 'react-native-phone-signature';
+} from '@linhnguyen96114/react-native-phone-signature';
+import React from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from './NavigationContext';
 
 const Main = () => {
@@ -82,10 +82,7 @@ const Main = () => {
               <Text
                 style={[
                   styles.buttonIcon,
-                  {
-                    color:
-                      activeIndex === index ? '#FFFFFF' : button.activeColor,
-                  },
+                  getIconColor(activeIndex === index, button.activeColor),
                 ]}
               >
                 {button.icon}
@@ -118,6 +115,10 @@ const Main = () => {
     </View>
   );
 };
+
+const getIconColor = (isActive: boolean, activeColor: string) => ({
+  color: isActive ? '#FFFFFF' : activeColor,
+});
 
 const styles = StyleSheet.create({
   container: {

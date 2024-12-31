@@ -1,20 +1,18 @@
 {
-  "name": "react-native-phone-signature",
+  "name": "@linhnguyen96114/react-native-phone-signature",
   "version": "0.1.0",
-  "description": "React Native Signature Component Use Skia",
+  "description": "A React Native signature component using native drawing APIs for iOS (UIKit) and Android (Canvas)",
   "source": "./src/index.tsx",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
+  "typings": "./index.d.ts",
+  "types": "./index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./lib/typescript/module/src/index.d.ts",
-        "default": "./lib/module/index.js"
-      },
-      "require": {
-        "types": "./lib/typescript/commonjs/src/index.d.ts",
-        "default": "./lib/commonjs/index.js"
-      }
+      "types": "./index.d.ts",
+      "import": "./lib/module/index.js",
+      "require": "./lib/commonjs/index.js",
+      "default": "./lib/module/index.js"
     }
   },
   "files": [
@@ -97,7 +95,7 @@
   "workspaces": [
     "example"
   ],
-  "packageManager": "yarn@3.6.1",
+  "packageManager": "yarn@4.5.1",
   "jest": {
     "preset": "react-native",
     "modulePathIgnorePatterns": [
