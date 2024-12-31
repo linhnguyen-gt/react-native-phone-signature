@@ -178,6 +178,7 @@ const SignaturePad = React.forwardRef<SignaturePadRef, SignaturePadProps>(
               isVisible={isVisible}
               onClose={onClose}
               renderSignaturePad={renderSignaturePad}
+              backgroundColorButton={backgroundColorButton}
               clearSignature={clearSignature}
               saveSignature={saveSignature}
             />

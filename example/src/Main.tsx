@@ -1,9 +1,9 @@
-import React from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SignaturePad, {
   type AssetSignature,
   type SignaturePadRef,
-} from 'react-native-phone-signature';
+} from '@linhnguyen96114/react-native-phone-signature';
+import React from 'react';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from './NavigationContext';
 
 const Main = () => {

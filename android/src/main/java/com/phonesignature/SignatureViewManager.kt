@@ -104,7 +104,6 @@ class SignatureViewManager : SimpleViewManager<SignatureView>() {
         when (commandId) {
             "clear" -> {
                 view.clear()
-                sendEvent(view, "onClear")
             }
             "save" -> {
                 val fileName = "signature_${System.currentTimeMillis()}.jpg"
