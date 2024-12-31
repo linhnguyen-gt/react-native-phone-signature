@@ -1,4 +1,4 @@
-import { SafeAreaView } from 'react-native';
+import { SafeAreaView, StyleSheet } from 'react-native';
 import Custom from './Custom';
 import Main from './Main';
 import { NavigationProvider, useNavigation } from './NavigationContext';
@@ -6,7 +6,7 @@ import { NavigationProvider, useNavigation } from './NavigationContext';
 const App = () => {
   return (
     <NavigationProvider>
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container}>
         <AppContent />
       </SafeAreaView>
     </NavigationProvider>
@@ -25,5 +25,11 @@ const AppContent = () => {
       return <Main />;
   }
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
 
 export default App;

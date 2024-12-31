@@ -82,10 +82,7 @@ const Main = () => {
               <Text
                 style={[
                   styles.buttonIcon,
-                  {
-                    color:
-                      activeIndex === index ? '#FFFFFF' : button.activeColor,
-                  },
+                  getIconColor(activeIndex === index, button.activeColor),
                 ]}
               >
                 {button.icon}
@@ -118,6 +115,10 @@ const Main = () => {
     </View>
   );
 };
+
+const getIconColor = (isActive: boolean, activeColor: string) => ({
+  color: isActive ? '#FFFFFF' : activeColor,
+});
 
 const styles = StyleSheet.create({
   container: {
